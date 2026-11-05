@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVANA LUXE | Product Manager</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.admin-page {
+    max-width: 1100px;
+    margin: 35px auto;
+    padding: 20px;
+    color: #f5f5f5;
+}
+
+.admin-page h1,
+.admin-page h2 {
+    color: #d4af37;
+}
+
+.admin-panel {
+    background: #111;
+    border: 1px solid #8d702b;
+    border-radius: 12px;
+    padding: 22px;
+    margin: 24px 0;
+}
+
+.admin-page input,
+.admin-page select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 11px;
+    margin: 7px 0 14px;
+    background: #222;
+    color: white;
+    border: 1px solid #8d702b;
+    border-radius: 6px;
+}
+
+.admin-page label {
+    display: block;
+    color: #d4af37;
+}
+
+.admin-button {
+    background: #d4af37;
+    color: #111;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 5px 5px 5px 0;
+}
+
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.admin-card {
+    border: 1px solid #8d702b;
+    border-radius: 10px;
+    padding: 14px;
+    background: #111;
+    min-width: 0;
+}
+
+.admin-card img {
+    width: 100%;
+    height: 190px;
+    object-fit: contain;
+    background: #080808;
+    border-radius: 6px;
+}
+
+.admin-card .old-price {
+    text-decoration: line-through;
+    color: #aaa;
+}
+
+.admin-card .sale-price {
+    color: #d4af37;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.admin-card input {
+    margin-bottom: 8px;
+}
+
+#status {
+    color: #d4af37;
+    overflow-wrap: anywhere;
+}
+</style>
+</head>
+
+<body>
+<div class="announcement">
+    EVANA LUXE — PRODUCT MANAGER
+</div>
+
+<main class="admin-page">
+    <a href="index.html" style="color:#d4af37">
+        ← Back to website
+    </a>
+
+    <h1>Product Manager</h1>
+    <p>Select multiple accessory photos and enter prices for each product.</p>
+
+    <section class="admin-panel">
+        <h2>1. Upload photos</h2>
+
+        <label for="photoFiles">Choose multiple pictures</label>
+        <input
+            type="file"
+            id="photoFiles"
+            accept="image/*"
+            multiple
+        >
+
+        <button class="admin-button" id="addPhotos" type="button">
+            Add selected photos
+        </button>
+
+        <p id="status" role="status">
+            Choose your product pictures to begin.
+        </p>
+    </section>
+
+    <section class="admin-panel">
+        <h2>2. Edit products</h2>
+        <p>Enter a name, category, price, and options.</p>
+
+        <div id="draftProducts" class="product-list"></div>
+
+        <button class="admin-button" id="saveProducts" type="button">
+            Save all products
+        </button>
+    </section>
+
+    <section class="admin-panel">
+        <h2>3. Saved products</h2>
+        <p>These products are saved in this browser on this computer.</p>
+        <p id="storageNote" style="color:#aaa;font-size:13px;overflow-wrap:anywhere;"></p>
+        <div id="savedProducts" class="product-list"></div>
+    </section>
+    <section class="admin-panel">
+    <h2>4. Publish to the live website</h2>
+    <p>After saving products, click this, choose your project folder (trial 1), and allow editing.</p>
+    <button class="admin-button" id="exportProducts" type="button">Export for website</button>
+    <p id="exportStatus" style="color:#d4af37"></p>
+</section>
+</main>
+
+<script>
+const DB_NAME = "EvanaLuxeProducts";
+const STORE_NAME = "products";
+
+let db;
+let drafts = [];
+let nextDraftId = 1;
+
+const statusBox = document.getElementById("status");
+
+/* Opens the product database and GUARANTEES the "products" store exists.
+   - brand new browser: creates it
+   - database already created empty by another page (products.html / mens.html):
+     upgrades it and adds the missing store */
+function createStore(database) {
+    if (!database.objectStoreNames.contains(STORE_NAME)) {
+        database.createObjectStore(STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true
+        });
+    }
+}
+
+function openDatabase() {
+    return new Promise((resolve, reject) => {
+        const first = indexedDB.open(DB_NAME);
+
+        first.onupgradeneeded = () => createStore(first.result);
+
+        first.onsuccess = () => {
+            const existing = first.result;
+
+            if (existing.objectStoreNames.contains(STORE_NAME)) {
+                db = existing;
+                resolve();
+                return;
+            }
+
+            // The database exists but has no products store: repair it.
+            const nextVersion = existing.version + 1;
+            existing.close();
+
+            const repair = indexedDB.open(DB_NAME, nextVersion);
+            repair.onupgradeneeded = () => createStore(repair.result);
+            repair.onsuccess = () => {
+                db = repair.result;
+                resolve();
+            };
+            repair.onblocked = () => reject(new Error(
+                "Another tab of this website is open. Close it and reload this page."
+            ));
+            repair.onerror = () => reject(repair.error);
+        };
+
+        first.onerror = () => reject(first.error);
+    });
+}
+
+function transaction(mode) {
+    return db.transaction(STORE_NAME, mode)
+        .objectStore(STORE_NAME);
+}
+
+function getSavedProducts() {
+    return new Promise((resolve, reject) => {
+        const request = transaction("readonly").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+function saveProduct(product) {
+    return new Promise((resolve, reject) => {
+        const request = transaction("readwrite").add(product);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}
+
+function deleteProduct(id) {
+    return new Promise((resolve, reject) => {
+        const request = transaction("readwrite").delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}
+
+function makeInput(labelText, value, type = "text") {
+    const label = document.createElement("label");
+    label.textContent = labelText;
+
+    const input = document.createElement("input");
+    input.type = type;
+    input.value = value;
+
+    if (type === "number") {
+        input.min = "0";
+        input.step = "0.01";
+    }
+
+    label.appendChild(input);
+    return { label, input };
+}
+
+const CATEGORIES = [
+    "Accessories",
+    "Brazilian Gold Accessories",
+    "Perfumes",
+    "Bags",
+    "Men's Collection"
+];
+const SUBCATEGORIES = {
+    "Accessories": [
+        "Rings",
+        "Bracelets",
+        "Necklaces",
+        "Sets",
+        "Anklets",
+        "Earrings",
+        "Other"
+    ],
+
+    "Brazilian Gold Accessories": [
+        "Rings",
+        "Bracelets",
+        "Necklaces",
+        "Sets",
+        "Anklets",
+        "Earrings",
+        "Other"
+    ],
+
+    "Perfumes": [
+        "Original",
+        "Standard",
+        "Other"
+    ],
+
+    "Bags": [
+        "Wallets",
+        "Bags",
+        "Portemonnaies",
+        "Other"
+    ],
+
+    "Men's Collection": [
+        "Watches",
+        "Accessories",
+        "Other"
+    ]
+};
+function makeSelect(labelText, value, options) {
+    const label = document.createElement("label");
+    label.textContent = labelText;
+
+    const select = document.createElement("select");
+    options.forEach(option => {
+        const element = document.createElement("option");
+        element.value = option;
+        element.textContent = option;
+        select.appendChild(element);
+    });
+    select.value = options.includes(value) ? value : options[0];
+
+    label.appendChild(select);
+    return { label, input: select };
+}
+
+function renderDrafts() {
+    const container = document.getElementById("draftProducts");
+    container.replaceChildren();
+
+    drafts.forEach(product => {
+        const card = document.createElement("div");
+        card.className = "admin-card";
+
+        const image = document.createElement("img");
+        image.src = URL.createObjectURL(product.file);
+        image.alt = "Product preview";
+        card.appendChild(image);
+
+      const name = makeInput("Product name", product.name);
+
+const category = makeSelect(
+    "Main Category",
+    product.category,
+    CATEGORIES
+);
+
+const availableSubcategories =
+    SUBCATEGORIES[product.category] || ["Other"];
+
+if (!availableSubcategories.includes(product.subcategory)) {
+    product.subcategory = availableSubcategories[0];
+}
+
+const subcategory = makeSelect(
+    "Subcategory",
+    product.subcategory,
+    availableSubcategories
+);
+
+const salePrice = makeInput(
+    "Price ($)", product.salePrice, "number"
+);
+
+        const options = makeInput(
+            "Options (separate with commas, e.g. Ring 1, Ring 2, Ring 3 — leave empty for none)",
+            product.options
+        );
+
+        card.append(
+    name.label,
+    category.label,
+    subcategory.label,
+    salePrice.label,
+    options.label
+);
+
+        options.input.addEventListener("input", () => {
+            product.options = options.input.value;
+        });
+
+        name.input.addEventListener("input", () => {
+            product.name = name.input.value;
+        });
+
+       category.input.addEventListener("change", () => {
+
+    product.category = category.input.value;
+
+    const available =
+        SUBCATEGORIES[product.category] || ["Other"];
+
+    product.subcategory = available[0];
+
+    subcategory.input.replaceChildren();
+
+    available.forEach(option => {
+        const element = document.createElement("option");
+        element.value = option;
+        element.textContent = option;
+        subcategory.input.appendChild(element);
+    });
+
+    subcategory.input.value = product.subcategory;
+});
+
+subcategory.input.addEventListener("change", () => {
+    product.subcategory = subcategory.input.value;
+});
+        salePrice.input.addEventListener("input", () => {
+            product.salePrice = salePrice.input.value;
+        });
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "admin-button";
+        remove.textContent = "Remove from upload";
+        remove.onclick = () => {
+            drafts = drafts.filter(item => item.draftId !== product.draftId);
+            renderDrafts();
+        };
+
+        card.appendChild(remove);
+        container.appendChild(card);
+    });
+}
+
+async function renderSavedProducts() {
+    const container = document.getElementById("savedProducts");
+    container.replaceChildren();
+
+    const products = await getSavedProducts();
+
+    products.forEach(product => {
+        const card = document.createElement("div");
+        card.className = "admin-card";
+
+        const image = document.createElement("img");
+        const imageUrl = URL.createObjectURL(product.image);
+        image.src = imageUrl;
+        image.alt = product.name;
+
+        const name = document.createElement("h3");
+        name.textContent = product.name;
+
+        const sale = document.createElement("p");
+        sale.className = "sale-price";
+        sale.textContent = "$" + Number(product.salePrice).toFixed(2);
+
+        const category = document.createElement("p");
+        category.textContent =
+    product.category + " → " + (product.subcategory || "Other");
+
+        const remove = document.createElement("button");
+        remove.className = "admin-button";
+        remove.textContent = "Delete product";
+
+        remove.onclick = async () => {
+            if (!confirm("Delete this saved product?")) return;
+            await deleteProduct(product.id);
+            URL.revokeObjectURL(imageUrl);
+            await renderSavedProducts();
+            statusBox.textContent = "Product deleted.";
+        };
+
+        const optionsLine = document.createElement("p");
+        optionsLine.style.color = "#aaa";
+        optionsLine.style.fontSize = "13px";
+        optionsLine.textContent = Array.isArray(product.options) && product.options.length
+            ? "Options: " + product.options.join(", ")
+            : "No options";
+
+        card.append(image, name, sale, category, optionsLine, remove);
+        container.appendChild(card);
+    });
+}
+
+document.getElementById("addPhotos").addEventListener("click", () => {
+    const files = document.getElementById("photoFiles").files;
+
+    if (!files.length) {
+        statusBox.textContent = "Please choose one or more pictures first.";
+        return;
+    }
+
+    for (const file of files) {
+        if (!file.type.startsWith("image/")) continue;
+
+        drafts.push({
+            draftId: nextDraftId++,
+            file,
+            name: file.name.replace(/\.[^.]+$/, ""),
+            category: "Accessories",
+subcategory: "Rings",
+salePrice: "",
+options: ""
+        });
+    }
+
+    renderDrafts();
+    statusBox.textContent =
+        drafts.length + " picture(s) ready to edit. Enter their prices.";
+});
+
+document.getElementById("saveProducts").addEventListener("click", async () => {
+    if (!drafts.length) {
+        statusBox.textContent = "There are no new products to save.";
+        return;
+    }
+
+    for (const product of drafts) {
+        if (!product.name.trim()) {
+            statusBox.textContent = "Every product needs a name.";
+            return;
+        }
+
+        if (
+            product.salePrice === "" ||
+            !Number.isFinite(Number(product.salePrice)) ||
+            Number(product.salePrice) <= 0
+        ) {
+            statusBox.textContent = "Please enter a price greater than 0 for every product.";
+            return;
+        }
+    }
+
+    try {
+        for (const product of drafts) {
+           await saveProduct({
+    name: product.name.trim(),
+    category: product.category,
+    subcategory: product.subcategory,
+    salePrice: Number(product.salePrice),
+                options: product.options
+                    .split(",")
+                    .map(option => option.trim())
+                    .filter(Boolean),
+                image: product.file
+            });
+        }
+
+        drafts = [];
+        renderDrafts();
+        await renderSavedProducts();
+
+        document.getElementById("photoFiles").value = "";
+        statusBox.textContent =
+            "Products saved in this browser. Your live showroom has not been changed yet.";
+    } catch (error) {
+        console.error(error);
+        statusBox.textContent =
+            "Could not save products: " + (error && error.message ? error.message : error);
+    }
+});
+
+openDatabase()
+    .then(renderSavedProducts)
+    .catch(error => {
+        console.error(error);
+        statusBox.textContent =
+            "Database could not open: " + (error && error.message ? error.message : error);
+    });
+
+/* Show which website address the products are stored under.
+   Browsers keep products separately for each address, so
+   http://localhost:5500 and http://127.0.0.1:5500 do NOT share products. */
+(function showStorageInfo() {
+    const note = document.getElementById("storageNote");
+    if (!note) return;
+
+    note.textContent = location.protocol === "file:"
+        ? "Warning: this page was opened as a file. Open the website with VS Code Live Server (Go Live) so products are saved reliably."
+        : "Products are saved in this browser under: " + location.origin +
+          " — always open the website from this same address.";
+
+    // Ask the browser not to delete the saved photos when it is short on space.
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().catch(() => {});
+    }
+})();
+</script>
+<script>
+async function toJpeg(blob, max) {
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.85));
+}
+
+document.getElementById("exportProducts").addEventListener("click", async () => {
+    const box = document.getElementById("exportStatus");
+    if (!window.showDirectoryPicker) {
+        box.textContent = "Please use Google Chrome or Edge.";
+        return;
+    }
+    try {
+        const products = await getSavedProducts();
+        if (!products.length) {
+            box.textContent = "No saved products to export.";
+            return;
+        }
+
+        const root = await window.showDirectoryPicker({ mode: "readwrite" });
+        const imagesDir = await root.getDirectoryHandle("images", { create: true });
+        const productsDir = await imagesDir.getDirectoryHandle("products", { create: true });
+
+        const list = [];
+        let count = 0;
+
+        for (const product of products) {
+            count++;
+            box.textContent = "Exporting " + count + " of " + products.length + "…";
+
+            const blob = await toJpeg(product.image, 1000);
+            const fileName = "p" + String(product.id).padStart(4, "0") + ".jpg";
+            const fileHandle = await productsDir.getFileHandle(fileName, { create: true });
+            const writer = await fileHandle.createWritable();
+            await writer.write(blob);
+            await writer.close();
+
+            list.push({
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                subcategory: product.subcategory,
+                salePrice: product.salePrice,
+                options: product.options,
+                image: "images/products/" + fileName
+            });
+        }
+
+        const jsonHandle = await root.getFileHandle("products.json", { create: true });
+        const jsonWriter = await jsonHandle.createWritable();
+        await jsonWriter.write(JSON.stringify(list, null, 2));
+        await jsonWriter.close();
+
+        box.textContent = "Done! " + list.length + " products exported. Now upload the whole folder to Netlify.";
+    } catch (error) {
+        console.error(error);
+        box.textContent = "Export failed: " + (error && error.message ? error.message : error);
+    }
+});
+</script>
+<script src="script.js"></script>
+</body>
+</html>

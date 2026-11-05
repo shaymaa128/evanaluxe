@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Men's Collection | EVANA LUXE</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .saved-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 280px)); justify-content: center; gap: 25px; margin-top: 20px; }
+    .saved-product-card { background: #171613; border: 1px solid #51442D; padding: 14px; text-align: center; color: #F5F0E6; transition: transform .3s, box-shadow .3s; }
+    .saved-product-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(220,193,138,.12); }
+    .saved-product-card img { width: 100%; height: 230px; object-fit: cover; margin-bottom: 10px; }
+    .saved-product-card h3 { color: #F5F0E6; font: normal 18px Georgia, serif; margin-bottom: 8px; }
+    .saved-product-card .sale-price { color: #DCC18A; font-weight: bold; margin: 6px 0 12px; }
+    .no-saved-products { color: #CFC6B7; padding: 20px; border: 1px solid #51442D; text-align: center; grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+
+  <div class="announcement">EVANA LUXE — MEN'S COLLECTION</div>
+
+  <main>
+    <section class="shop-section page-shop">
+      <a href="products.html" class="back-link">← BACK TO PRODUCTS</a>
+
+      <div class="section-heading">
+        <p class="eyebrow">FOR HIM</p>
+        <h2>Men's Collection</h2>
+        <p>Refined pieces with a bold edge.</p>
+      </div>
+
+      <!-- Products you type by hand go here -->
+      <div class="product-grid">
+        <!--
+        <article class="product-card">
+          <div class="product-image"><img src="images/mens-chain.jpg" alt="Men's chain"></div>
+          <div class="product-info">
+            <p class="category">CHAINS</p>
+            <h3>Men's Chain</h3>
+            <p class="price">$10.00</p>
+            <button class="add-button" data-name="Men's Chain" data-image="images/mens-chain.jpg" data-price="10.00">Add to Cart</button>
+          </div>
+        </article>
+        -->
+      </div>
+
+      <!-- Products uploaded with admin.html appear here -->
+      <div id="mensProducts" class="saved-product-grid"></div>
+
+      <button type="button" id="doneButton" class="diamond-cart-button" aria-label="Go to cart">
+        <span class="diamond-icon">♢</span>
+        <span>VIEW MY BAG</span>
+      </button>
+    </section>
+  </main>
+
+  <footer>
+    <p>Accessories that make you shine ✨</p>
+    <p class="copyright">© 2026 Evana Luxe</p>
+  </footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const box = document.getElementById("mensProducts");
+  try {
+    const db = await new Promise((res, rej) => {
+      const r = indexedDB.open("EvanaLuxeProducts");
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    if (!db.objectStoreNames.contains("products")) { db.close(); return; }
+    const products = await new Promise((res, rej) => {
+      const r = db.transaction("products", "readonly").objectStore("products").getAll();
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    db.close();
+
+    const mens = products.filter(p =>
+      String(p.category || "").trim().toLowerCase().startsWith("men") && p.image);
+
+    mens.forEach(p => {
+      const card = document.createElement("article");
+      card.className = "saved-product-card";
+
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(p.image);
+      img.alt = p.name || "Men's product";
+
+      const h3 = document.createElement("h3");
+      h3.textContent = p.name || "EVANA LUXE";
+
+      const price = document.createElement("p");
+      price.className = "sale-price";
+      price.textContent = "$" + Number(p.salePrice).toFixed(2);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "add-button";
+      btn.textContent = "Add to Cart";
+      btn.dataset.name = p.name || "EVANA LUXE";
+      btn.dataset.price = String(p.salePrice ?? p.oldPrice ?? "");
+
+      card.append(img, h3, price, btn);
+      box.appendChild(card);
+    });
+  } catch (e) {
+    console.error(e);
+  }
+});
+</script>
+<script src="script.js"></script>
+</body>
+</html>

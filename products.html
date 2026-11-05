@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products | EVANA LUXE</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .products-page {
+            max-width: 1100px;
+            margin: 45px auto;
+            padding: 25px 20px;
+        }
+
+        .products-heading {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .products-heading h1,
+        .product-category h2 {
+            color: #d4af37;
+        }
+
+        .product-category {
+            margin: 45px 0;
+            scroll-margin-top: 25px;
+        }
+
+        .products-back {
+            display: inline-block;
+            color: #d4af37;
+            text-decoration: none;
+            margin-bottom: 25px;
+        }
+
+        /* PRODUCT GRID */
+        .saved-product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* PRODUCT CARD */
+        .saved-product-card {
+            background: #111;
+            border: 1px solid #8d702b;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            color: #fff;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* PRODUCT PICTURE */
+        .saved-product-card img {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 3 / 2;
+            object-fit: contain;
+            object-position: center;
+            background: #080808;
+            border-radius: 6px;
+        }
+
+        .saved-product-card h3 {
+            color: #d4af37;
+            overflow-wrap: anywhere;
+        }
+
+        .saved-product-card .sale-price {
+            color: #d4af37;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        .saved-product-card .old-price {
+            color: #aaa;
+            text-decoration: line-through;
+            margin-bottom: 4px;
+        }
+
+        .no-saved-products {
+            color: #ccc;
+            padding: 20px;
+            border: 1px solid #8d702b;
+            border-radius: 10px;
+        }
+
+        .saved-subcategory-section {
+            width: 100%;
+            margin: 35px 0;
+        }
+
+        .subcategory-heading {
+            color: #c9a45c;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .load-more-container {
+            text-align: center;
+            margin: 25px 0 40px;
+        }
+
+        .load-more-info {
+            color: #c9a45c;
+            margin-bottom: 12px;
+        }
+
+        .load-more-btn {
+            background: #b99a55;
+            color: #101010;
+            border: 1px solid #b99a55;
+            padding: 12px 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .load-more-btn:hover {
+            background: #101010;
+            color: #c9a45c;
+        }
+
+        /* MOBILE */
+        @media (max-width: 650px) {
+            .saved-product-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .saved-product-card {
+                padding: 8px;
+            }
+
+            .saved-product-card img {
+                aspect-ratio: 3 / 2;
+            }
+        }
+        /* Main category container: stack subcategories vertically */
+.category-products {
+    display: block;
+    width: 100%;
+}
+
+/* Each subcategory gets its own full-width section */
+.saved-subcategory-section {
+    display: block;
+    width: 100%;
+    margin: 35px 0;
+}
+
+/* Product pictures grid */
+.saved-product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+    width: 100%;
+} 
+/* FIX EVANA LUXE PRODUCT CATEGORY LAYOUT */
+
+.category-products {
+    display: block !important;
+    width: 100% !important;
+}
+
+.saved-subcategory-section {
+    display: block !important;
+    width: 100% !important;
+    margin: 35px 0 !important;
+    clear: both;
+}
+
+.saved-subcategory-section .saved-product-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 22px !important;
+    width: 100% !important;
+}
+
+.saved-product-card {
+    width: auto;
+    min-width: 0;
+}
+
+.saved-product-card img {
+    display: block;
+    width: 100%;
+    height: 240px;
+    object-fit: contain;
+}
+
+@media (max-width: 650px) {
+    .saved-subcategory-section .saved-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+    }
+
+    .saved-product-card img {
+        height: 160px;
+    }
+}
+    </style>
+</head>
+
+<body>
+
+    <div class="announcement">
+        EVANA LUXE — OUR COLLECTION
+    </div>
+
+    <main class="products-page">
+
+        <a href="index.html" class="products-back">
+            ← BACK TO HOME
+        </a>
+
+        <div class="products-heading">
+            <p class="eyebrow">HANDPICKED FOR YOU</p>
+            <h1>Our Products</h1>
+            <p>Explore the EVANA LUXE collection.</p>
+        </div>
+
+        <section class="product-category" id="accessories">
+            <h2>Accessories</h2>
+           <div id="accessoriesProducts" class="category-products"></div>
+        </section>
+
+        <section class="product-category" id="brazilian">
+            <h2>Brazilian Gold Accessories</h2>
+            <div id="brazilianProducts" class="category-products"></div>
+        </section>
+
+        <section class="product-category" id="perfumes">
+            <h2>Perfumes</h2>
+            <div id="perfumesProducts" class="category-products"></div>
+        </section>
+
+        <section class="product-category" id="mens">
+            <h2>Men's Collection</h2>
+            <div id="mensProducts" class="category-products"></div>
+        </section>
+
+        <section class="product-category" id="bags">
+            <h2>Bags</h2>
+            <div id="bagsProducts" class="category-products"></div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>Accessories that make you shine ✨</p>
+        <p class="copyright">©️ 2026 Evana Luxe</p>
+    </footer>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+
+        const PRODUCTS_PER_PAGE = 16;
+
+        const categories = {
+            accessories: document.getElementById("accessoriesProducts"),
+            brazilian: document.getElementById("brazilianProducts"),
+            perfumes: document.getElementById("perfumesProducts"),
+            mens: document.getElementById("mensProducts"),
+            bags: document.getElementById("bagsProducts")
+        };
+
+        const emptyMessages = {
+            accessories: "No accessories added yet.",
+            brazilian: "No Brazilian gold accessories added yet.",
+            perfumes: "No perfumes added yet.",
+            mens: "No men's products added yet.",
+            bags: "No bags added yet."
+        };
+try {
+
+       let products = [];
+
+// 1) Published list: works for every visitor
+try {
+    const response = await fetch("products.json", { cache: "no-store" });
+    if (response.ok) products = await response.json();
+} catch (e) { /* no products.json yet */ }
+
+// 2) Fallback: products saved in this browser
+if (!products.length) {
+    const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("EvanaLuxeProducts");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+
+    if (!db.objectStoreNames.contains("products")) {
+        db.close();
+        throw new Error("Products store not found.");
+    }
+
+    products = await new Promise((resolve, reject) => {
+        const transaction = db.transaction("products", "readonly");
+        const request = transaction.objectStore("products").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+
+    db.close();
+}
+
+            Object.values(categories).forEach(container => {
+                if (container) container.replaceChildren();
+            });
+
+            const grouped = {
+                accessories: new Map(),
+                brazilian: new Map(),
+                perfumes: new Map(),
+                mens: new Map(),
+                bags: new Map()
+            };
+
+            for (const product of products) {
+
+                const category = String(product.category || "")
+                    .trim().toLowerCase();
+
+                let key = "";
+
+                if (category.includes("brazil")) {
+                    key = "brazilian";
+                } else if (category.includes("accessor")) {
+                    key = "accessories";
+                } else if (category.includes("perfume")) {
+                    key = "perfumes";
+                } else if (category.includes("men")) {
+                    key = "mens";
+                } else if (
+                    category.includes("bag") ||
+                    category.includes("wallet") ||
+                    category.includes("portemonnaie")
+                ) {
+                    key = "bags";
+                }
+
+                if (!key || !categories[key] || !product.image) continue;
+
+                const subcategory =
+                    String(product.subcategory || "Other").trim() || "Other";
+
+                if (!grouped[key].has(subcategory)) {
+                    grouped[key].set(subcategory, []);
+                }
+
+                grouped[key].get(subcategory).push(product);
+            }
+
+            Object.keys(categories).forEach(key => {
+
+                const container = categories[key];
+                if (!container) return;
+
+                const subcategories = grouped[key];
+
+                if (subcategories.size === 0) {
+                    const message = document.createElement("p");
+                    message.className = "no-saved-products";
+                    message.textContent = emptyMessages[key];
+                    container.appendChild(message);
+                    return;
+                }
+
+                subcategories.forEach((items, subcategoryName) => {
+
+                    const section = document.createElement("section");
+                    section.className = "saved-subcategory-section";
+
+                    const heading = document.createElement("h2");
+                    heading.className = "subcategory-heading";
+                    heading.textContent = subcategoryName;
+
+                    const grid = document.createElement("div");
+                    grid.className = "saved-product-grid";
+
+                    const controls = document.createElement("div");
+                    controls.className = "load-more-container";
+
+                    const info = document.createElement("p");
+                    info.className = "load-more-info";
+
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "load-more-btn";
+                    button.textContent = "Load More";
+
+                    let shown = 0;
+
+                    function renderMore() {
+
+                        const nextItems = items.slice(
+                            shown,
+                            shown + PRODUCTS_PER_PAGE
+                        );
+
+                        nextItems.forEach(product => {
+
+                            const card = document.createElement("article");
+                            card.className = "saved-product-card";
+
+                            const image = document.createElement("img");
+                            image.src = typeof product.image === "string"
+    ? product.image
+    : URL.createObjectURL(product.image);
+                            image.loading = "lazy";
+
+                            const name = document.createElement("h3");
+                            name.textContent = product.name || "EVANA LUXE";
+
+                            const price = document.createElement("p");
+                            price.className = "sale-price";
+                            price.textContent =
+                                "$" + Number(product.salePrice).toFixed(2);
+
+                            const optionList =
+                                Array.isArray(product.options) &&
+                                product.options.length
+                                    ? product.options
+                                    : ["Option 1", "Option 2", "Option 3"];
+
+                            const optionLabel = document.createElement("label");
+                            optionLabel.className = "option-label";
+                            optionLabel.textContent = "Choose your option";
+
+                            const select = document.createElement("select");
+                            select.className = "option-select";
+
+                            optionList.forEach(option => {
+                                const element = document.createElement("option");
+                                element.value = option;
+                                element.textContent = option;
+                                select.appendChild(element);
+                            });
+
+                            optionLabel.appendChild(select);
+
+                            const addButton = document.createElement("button");
+                            addButton.type = "button";
+                            addButton.className = "add-button";
+                            addButton.textContent = "Add to Cart";
+                            addButton.dataset.name =
+                                product.name || "EVANA LUXE";
+                            addButton.dataset.price =
+                                String(product.salePrice ?? product.oldPrice ?? "");
+                            addButton.dataset.option = select.value;
+
+                            select.addEventListener("change", () => {
+                                addButton.dataset.option = select.value;
+                            });
+
+                            card.append(
+                                image,
+                                name,
+                                price,
+                                optionLabel,
+                                addButton
+                            );
+
+                            grid.appendChild(card);
+                        });
+
+                        shown += nextItems.length;
+
+                        info.textContent =
+                            "Showing " + shown + " of " + items.length + " products";
+
+                        button.hidden = shown >= items.length;
+                    }
+
+                    button.addEventListener("click", renderMore);
+
+                    section.append(heading, grid, controls);
+                    controls.append(info, button);
+
+                    container.appendChild(section);
+
+                    renderMore();
+                });
+            });
+
+        } catch (error) {
+            console.error("Could not load EVANA LUXE products:", error);
+
+            Object.values(categories).forEach(container => {
+                if (!container) return;
+
+                const message = document.createElement("p");
+                message.className = "no-saved-products";
+                message.textContent =
+                    "Products could not load. Please check the product manager and website address.";
+
+                container.replaceChildren(message);
+            });
+        }
+    });
+    </script>
+
+    <script>
+    /* Show only the category selected from the Showroom */
+    (function () {
+        const sections = [...document.querySelectorAll(".product-category")];
+
+        const wanted = new URLSearchParams(location.search).get("cat") ||
+            location.hash.replace("#", "");
+
+        const target = sections.find(section => section.id === wanted);
+        if (!target) return;
+
+        sections.forEach(section => {
+            if (section !== target) section.hidden = true;
+        });
+
+        const title = target.querySelector("h2").textContent;
+
+        document.title = title + " | EVANA LUXE";
+
+        document.querySelector(".products-heading h1").textContent = title;
+
+        document.querySelector(".products-heading p:last-child").textContent =
+            "Explore our " + title.toLowerCase() + ".";
+
+        target.querySelector("h2").hidden = true;
+
+        const back = document.querySelector(".products-back");
+        back.href = "showroom.html";
+        back.textContent = "← BACK TO SHOWROOM";
+    })();
+    </script>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection | EVANA LUXE</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <style>
+        /* Black background, same as the other pages */
+        html, body { background: #000; }
+    </style>
+</head>
+<body>
+
+    <div class="announcement">
+        ✨ SPECIAL OFFERS  ✨
+    </div>
+
+    <!-- Header, navigation, search and cart drawer are added by script.js (same as every page) -->
+
+    <main>
+        <div id="collectionRoot"></div>
+
+        <section class="shop-section">
+            
+            <button type="button" id="doneButton" class="diamond-cart-button" aria-label="Go to cart">
+                <span class="diamond-icon">♢</span>
+                <span>VIEW MY BAG</span>
+            </button>
+        </section>
+    </main>
+
+    <footer>
+        <p>Accessories that make you shine ✨</p>
+        <p class="copyright">© 2026 Evana Luxe</p>
+    </footer>
+
+    <!-- Items come from collection-data.js AND from collection-manager.html (saved photos) -->
+    <script src="collection-data.js"></script>
+    <script>
+    (function () {
+        var root = document.getElementById("collectionRoot");
+
+        function buildCard(item) {
+            var card = document.createElement("article");
+            card.className = "product-card";
+
+            var imageBox = document.createElement("div");
+            imageBox.className = "product-image";
+            var img = document.createElement("img");
+            img.src = item.image;
+            img.alt = item.name;
+            imageBox.appendChild(img);
+
+            var info = document.createElement("div");
+            info.className = "product-info";
+
+            var tag = document.createElement("p");
+            tag.className = "category";
+            tag.textContent = item.tag || "";
+
+            var title = document.createElement("h3");
+            title.textContent = item.name;
+
+            var price = document.createElement("p");
+            price.className = "price";
+            price.textContent = "$ " + Number(item.price).toFixed(2);
+
+            info.appendChild(tag);
+            info.appendChild(title);
+            info.appendChild(price);
+
+            if (item.options && item.options.length) {
+                var label = document.createElement("label");
+                label.className = "option-label";
+                label.appendChild(document.createTextNode(item.optionLabel || "Choose your option"));
+                var select = document.createElement("select");
+                select.className = "option-select";
+                select.setAttribute("aria-label", item.optionLabel || "Choose your option");
+                item.options.forEach(function (opt) {
+                    var o = document.createElement("option");
+                    o.value = opt;
+                    o.textContent = opt;
+                    select.appendChild(o);
+                });
+                label.appendChild(select);
+                info.appendChild(label);
+            }
+
+            // Same button your main shop uses, so script.js adds it to the SAME cart
+            var button = document.createElement("button");
+            button.className = "add-button";
+            button.type = "button";
+            button.dataset.name = item.name;
+            // Saved (uploaded) photos have no fixed path: script.js makes a small copy from the picture itself
+            if (!item.isUpload) button.dataset.image = item.image;
+            button.dataset.price = String(item.price);
+            button.textContent = "Add to Cart";
+            info.appendChild(button);
+
+            card.appendChild(imageBox);
+            card.appendChild(info);
+            return card;
+        }
+
+        function render(categories) {
+            root.replaceChildren();
+            categories.forEach(function (cat, index) {
+                if (!cat.items.length) return;
+                var section = document.createElement("section");
+                section.className = "shop-section";
+                if (index === 0) section.id = "shop";
+
+                var heading = document.createElement("div");
+                heading.className = "section-heading";
+                heading.innerHTML = '<p class="eyebrow">COLLECTION</p><h2></h2><p class="sub"></p>';
+                heading.querySelector("h2").textContent = cat.category;
+                heading.querySelector(".sub").textContent = cat.subtitle || "";
+                section.appendChild(heading);
+
+                var grid = document.createElement("div");
+                grid.className = "product-grid";
+                cat.items.forEach(function (item) { grid.appendChild(buildCard(item)); });
+                section.appendChild(grid);
+                root.appendChild(section);
+            });
+        }
+
+        // 1) items typed in collection-data.js
+        var categories = COLLECTION.map(function (c) {
+            return { category: c.category, subtitle: c.subtitle, items: c.items.slice() };
+        });
+        render(categories);
+
+        // 2) items with uploaded photos, saved from collection-manager.html
+        try {
+            var open = indexedDB.open("evanaCollectionDB", 1);
+            open.onupgradeneeded = function () {
+                open.result.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+            };
+            open.onsuccess = function () {
+                var req = open.result.transaction("items", "readonly").objectStore("items").getAll();
+                req.onsuccess = function () {
+                    (req.result || []).forEach(function (rec) {
+                        var cat = categories.filter(function (c) { return c.category === rec.category; })[0];
+                        if (!cat) {
+                            cat = { category: rec.category, subtitle: "", items: [] };
+                            categories.push(cat);
+                        }
+                        cat.items.push({
+                            name: rec.name,
+                            price: rec.price,
+                            tag: rec.tag,
+                            optionLabel: rec.optionLabel,
+                            options: rec.options,
+                            image: URL.createObjectURL(rec.image),
+                            isUpload: true
+                        });
+                    });
+                    render(categories);
+                };
+            };
+        } catch (e) { /* storage not available: only collection-data.js items show */ }
+    })();
+    </script>
+    <script src="extras.js"></script>
+</body>
+</html>
