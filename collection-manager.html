@@ -71,6 +71,17 @@
     <p class="msg" id="msg"></p>
   </div>
 
+  <h2>Publish to the live website</h2>
+  <div class="panel">
+    <p class="hint" style="font-size:.9rem;color:#ddd;margin-top:0">
+      Items saved above live only in THIS browser. To show them to everyone on the live website,
+      click the button below. It downloads a file called <b>collection-data.js</b>.
+      Put that file in your evanaluxe folder (replace the old one), then Commit and Push in GitHub Desktop.
+    </p>
+    <button id="exportBtn" type="button">EXPORT TO WEBSITE (collection-data.js)</button>
+    <p class="msg" id="exportMsg"></p>
+  </div>
+
   <h2>Saved items</h2>
   <div class="grid" id="saved"></div>
 </div>
@@ -189,6 +200,66 @@
       return renderSaved();
     }).catch(function (e) {
       say("Could not save: " + (e && e.message ? e.message : e), "err");
+    }).then(function () { btn.disabled = false; });
+  });
+
+  /* ----- export: turns every saved item into collection-data.js for the live website ----- */
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { reject(new Error("Could not read a picture.")); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  $("exportBtn").addEventListener("click", function () {
+    var btn = this;
+    var out = $("exportMsg");
+    function sayExport(text, cls) { out.textContent = text; out.className = "msg " + (cls || ""); }
+    btn.disabled = true;
+    sayExport("Preparing the file…");
+
+    dbRun("readonly", function (s) { return s.getAll(); }).then(function (items) {
+      if (!items.length) { throw new Error("There are no saved items to export yet."); }
+      var categories = [];
+      var chain = Promise.resolve();
+      items.forEach(function (it) {
+        chain = chain.then(function () { return blobToDataUrl(it.image); }).then(function (dataUrl) {
+          var cat = categories.filter(function (c) { return c.category === it.category; })[0];
+          if (!cat) {
+            cat = { category: it.category, subtitle: "", items: [] };
+            categories.push(cat);
+          }
+          cat.items.push({
+            name: it.name,
+            price: it.price,
+            tag: it.tag || "",
+            optionLabel: it.optionLabel || "",
+            options: it.options || [],
+            image: dataUrl
+          });
+        });
+      });
+      return chain.then(function () { return categories; });
+    }).then(function (categories) {
+      var text =
+        "/* EVANA LUXE — COLLECTION PAGE DATA\n" +
+        "   Made by collection-manager.html (Export to website).\n" +
+        "   Replace this file in your evanaluxe folder, then Commit + Push in GitHub Desktop. */\n\n" +
+        "const COLLECTION = " + JSON.stringify(categories, null, 2) + ";\n";
+      var blob = new Blob([text], { type: "text/javascript" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "collection-data.js";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+      sayExport("Done. collection-data.js was downloaded. Now copy it into your evanaluxe folder (replace the old file), then Commit and Push in GitHub Desktop.", "ok");
+    }).catch(function (e) {
+      sayExport("Could not export: " + (e && e.message ? e.message : e), "err");
     }).then(function () { btn.disabled = false; });
   });
 

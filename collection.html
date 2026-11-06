@@ -127,9 +127,32 @@
             });
         }
 
-        // 1) items typed in collection-data.js
+        // Pictures exported from collection-manager.html are stored inside collection-data.js
+        // as text ("data:image/..."). Turn them into normal picture links so the cart can make small copies.
+        function dataUrlToBlobUrl(dataUrl) {
+            var parts = dataUrl.split(",");
+            var mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/jpeg";
+            var bin = atob(parts[1]);
+            var bytes = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return URL.createObjectURL(new Blob([bytes], { type: mime }));
+        }
+
+        // 1) items from collection-data.js (typed by hand, or exported from collection-manager.html)
         var categories = COLLECTION.map(function (c) {
-            return { category: c.category, subtitle: c.subtitle, items: c.items.slice() };
+            return {
+                category: c.category,
+                subtitle: c.subtitle,
+                items: c.items.map(function (item) {
+                    if (typeof item.image === "string" && item.image.indexOf("data:") === 0) {
+                        var copy = Object.assign({}, item);
+                        copy.image = dataUrlToBlobUrl(item.image);
+                        copy.isUpload = true;
+                        return copy;
+                    }
+                    return item;
+                })
+            };
         });
         render(categories);
 
@@ -148,6 +171,8 @@
                             cat = { category: rec.category, subtitle: "", items: [] };
                             categories.push(cat);
                         }
+                        // already exported to the website? then do not show it twice on this computer
+                        if (cat.items.some(function (x) { return x.name === rec.name; })) return;
                         cat.items.push({
                             name: rec.name,
                             price: rec.price,
