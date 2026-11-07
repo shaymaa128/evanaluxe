@@ -139,7 +139,9 @@
         }
 
         // 1) items from collection-data.js (typed by hand, or exported from collection-manager.html)
-        var categories = COLLECTION.map(function (c) {
+        // Safety: if collection-data.js is missing/not loaded, the page still works (shows nothing instead of crashing)
+        var DATA = (typeof COLLECTION !== "undefined" && Array.isArray(COLLECTION)) ? COLLECTION : [];
+        var categories = DATA.map(function (c) {
             return {
                 category: c.category,
                 subtitle: c.subtitle,
