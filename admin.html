@@ -641,8 +641,7 @@ document.getElementById("exportProducts").addEventListener("click", async () => 
         await jsonWriter.write(JSON.stringify(list, null, 2));
         await jsonWriter.close();
 
-        box.textContent = "Done! " + list.length + " products exported. Now upload the whole folder to Netlify.";
-    } catch (error) {
+box.textContent = "Done! " + list.length + " products exported. Now open GitHub Desktop, click Commit to main, then Push origin to update the website.";    } catch (error) {
         console.error(error);
         box.textContent = "Export failed: " + (error && error.message ? error.message : error);
     }
