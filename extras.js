@@ -21,14 +21,14 @@
   function showPriceNote() {
     var overlay = document.createElement("div");
     overlay.style.cssText =
-      "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;" +
+      "position:fixed;inset:0;background:rgba(59,42,32,.55);z-index:99999;" +
       "display:flex;align-items:center;justify-content:center;padding:16px;";
     overlay.innerHTML =
-      '<div style="background:#fff;max-width:340px;width:100%;padding:24px;border-radius:12px;' +
+      '<div style="background:#fffdf9;max-width:340px;width:100%;padding:24px;border-radius:12px;' +
       'text-align:left;direction:ltr;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.4);">' +
-      '<h3 style="margin:0 0 10px;color:#b8860b;">Please note</h3>' +
-      '<p style="margin:0 0 18px;line-height:1.5;color:#000;font-weight:bold;">The price shown is for 1 item - option 1 from left to right</p>' +
-      '<button id="evanaOk" style="background:#111;color:#d4af37;border:0;padding:10px 28px;' +
+      '<h3 style="margin:0 0 10px;color:#8b5a2b;">Please note</h3>' +
+      '<p style="margin:0 0 18px;line-height:1.5;color:#3b2a20;font-weight:bold;">The price shown is for 1 item - option 1 from left to right</p>' +
+      '<button id="evanaOk" style="background:#8b5a2b;color:#fff;border:0;padding:10px 28px;' +
       'border-radius:6px;font-size:1rem;cursor:pointer;float:right;">OK</button>' +
       '<div style="clear:both"></div></div>';
     document.body.appendChild(overlay);

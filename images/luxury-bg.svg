@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffdf9"/>
+      <stop offset="0.5" stop-color="#f8f0e6"/>
+      <stop offset="1" stop-color="#efe1d0"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.15" cy="0.1" r="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.9" cy="0.95" r="0.55">
+      <stop offset="0" stop-color="#c9a27a" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#c9a27a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowC" cx="0.85" cy="0.1" r="0.35">
+      <stop offset="0" stop-color="#e9d3b8" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#e9d3b8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="2.2"/>
+    </filter>
+    <filter id="softer" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.3  0 0 0 0 0.18  0 0 0 0.07 0"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#base)"/>
+  <rect width="1920" height="1080" fill="url(#glowC)"/>
+  <rect width="1920" height="1080" fill="url(#glowB)"/>
+  <rect width="1920" height="1080" fill="url(#glowA)"/>
+
+  <!-- wide soft brown marble clouds -->
+  <g filter="url(#softer)" fill="none" stroke-linecap="round">
+    <path d="M-80 220 C 320 120, 520 420, 900 330 S 1500 120, 2000 300" stroke="#b98d63" stroke-opacity="0.22" stroke-width="46"/>
+    <path d="M-60 820 C 380 700, 700 980, 1100 860 S 1700 700, 2000 880" stroke="#a97c52" stroke-opacity="0.20" stroke-width="54"/>
+  </g>
+
+  <!-- fine marble veins -->
+  <g filter="url(#soft)" fill="none" stroke-linecap="round">
+    <path d="M-40 260 C 300 160, 540 450, 900 350 S 1480 150, 1960 330" stroke="#8b5a2b" stroke-opacity="0.40" stroke-width="2.2"/>
+    <path d="M200 -20 C 260 200, 120 380, 340 560 S 520 900, 420 1100" stroke="#a9794a" stroke-opacity="0.28" stroke-width="1.6"/>
+    <path d="M1250 -20 C 1180 220, 1420 330, 1360 560 S 1560 860, 1480 1100" stroke="#8b5a2b" stroke-opacity="0.30" stroke-width="1.8"/>
+    <path d="M-20 860 C 340 760, 680 1010, 1100 880 S 1700 730, 1960 900" stroke="#8b5a2b" stroke-opacity="0.34" stroke-width="2"/>
+    <path d="M900 350 C 980 470, 880 600, 1010 720" stroke="#c19a6b" stroke-opacity="0.35" stroke-width="1.2"/>
+    <path d="M520 450 C 640 520, 600 640, 740 700" stroke="#c19a6b" stroke-opacity="0.30" stroke-width="1"/>
+    <path d="M1480 150 C 1560 260, 1700 240, 1780 380" stroke="#c19a6b" stroke-opacity="0.30" stroke-width="1.1"/>
+  </g>
+
+  <!-- gold-brown shimmer lines -->
+  <g fill="none" stroke="#c9a27a" stroke-opacity="0.30" stroke-width="0.9">
+    <path d="M-40 250 C 300 150, 540 440, 900 340 S 1480 140, 1960 320"/>
+    <path d="M-20 850 C 340 750, 680 1000, 1100 870 S 1700 720, 1960 890"/>
+  </g>
+
+  <rect width="1920" height="1080" filter="url(#grain)"/>
+</svg>
