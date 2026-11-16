@@ -147,6 +147,7 @@
         <h2>3. Saved products</h2>
         <p>These products are saved in this browser on this computer.</p>
         <p id="storageNote" style="color:#7a6552;font-size:13px;overflow-wrap:anywhere;"></p>
+        <div id="clearButtons"></div>
         <div id="savedProducts" class="product-list"></div>
     </section>
     <section class="admin-panel">
@@ -231,6 +232,14 @@ function getSavedProducts() {
 function saveProduct(product) {
     return new Promise((resolve, reject) => {
         const request = transaction("readwrite").add(product);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}
+
+function updateProduct(product) {
+    return new Promise((resolve, reject) => {
+        const request = transaction("readwrite").put(product);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
     });
@@ -432,6 +441,29 @@ async function renderSavedProducts() {
 
     const products = await getSavedProducts();
 
+    /* Clear-all buttons, one per category */
+    const clearBox = document.getElementById("clearButtons");
+    clearBox.replaceChildren();
+    CATEGORIES.forEach(categoryName => {
+        const count = products.filter(p => p.category === categoryName).length;
+        const clearBtn = document.createElement("button");
+        clearBtn.type = "button";
+        clearBtn.className = "admin-button";
+        clearBtn.textContent = "Clear all " + categoryName + " (" + count + ")";
+        clearBtn.onclick = async () => {
+            if (count === 0) {
+                statusBox.textContent = "There are no products in " + categoryName + ".";
+                return;
+            }
+            if (!confirm("Delete ALL " + count + " products in \"" + categoryName + "\"? This cannot be undone.")) return;
+            const toDelete = (await getSavedProducts()).filter(p => p.category === categoryName);
+            for (const p of toDelete) await deleteProduct(p.id);
+            await renderSavedProducts();
+            statusBox.textContent = "All products in " + categoryName + " were deleted.";
+        };
+        clearBox.appendChild(clearBtn);
+    });
+
     products.forEach(product => {
         const card = document.createElement("div");
         card.className = "admin-card";
@@ -471,7 +503,74 @@ async function renderSavedProducts() {
             ? "Options: " + product.options.join(", ")
             : "No options";
 
-        card.append(image, name, sale, category, optionsLine, remove);
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "admin-button";
+        edit.textContent = "Edit product";
+        edit.onclick = () => {
+            const nameField = makeInput("Product name", product.name);
+            const catField = makeSelect("Main Category", product.category, CATEGORIES);
+            let subs = SUBCATEGORIES[catField.input.value] || ["Other"];
+            const subField = makeSelect("Subcategory", product.subcategory, subs);
+            const priceField = makeInput("Price ($)", product.salePrice, "number");
+
+            catField.input.addEventListener("change", () => {
+                subs = SUBCATEGORIES[catField.input.value] || ["Other"];
+                subField.input.replaceChildren();
+                subs.forEach(option => {
+                    const element = document.createElement("option");
+                    element.value = option;
+                    element.textContent = option;
+                    subField.input.appendChild(element);
+                });
+            });
+
+            const save = document.createElement("button");
+            save.type = "button";
+            save.className = "admin-button";
+            save.textContent = "Save changes";
+            save.onclick = async () => {
+                const newName = nameField.input.value.trim();
+                const newPrice = Number(priceField.input.value);
+                if (!newName) {
+                    statusBox.textContent = "Every product needs a name.";
+                    return;
+                }
+                if (priceField.input.value === "" || !Number.isFinite(newPrice) || newPrice <= 0) {
+                    statusBox.textContent = "Please enter a price greater than 0.";
+                    return;
+                }
+                product.name = newName;
+                product.category = catField.input.value;
+                product.subcategory = subField.input.value;
+                product.salePrice = newPrice;
+                await updateProduct(product);
+                URL.revokeObjectURL(imageUrl);
+                await renderSavedProducts();
+                statusBox.textContent = "Product updated. Click Export for website (section 4) to publish the change.";
+            };
+
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.className = "admin-button";
+            cancel.textContent = "Cancel";
+            cancel.onclick = async () => {
+                URL.revokeObjectURL(imageUrl);
+                await renderSavedProducts();
+            };
+
+            card.replaceChildren(
+                image,
+                nameField.label,
+                catField.label,
+                subField.label,
+                priceField.label,
+                save,
+                cancel
+            );
+        };
+
+        card.append(image, name, sale, category, optionsLine, edit, remove);
         container.appendChild(card);
     });
 }
