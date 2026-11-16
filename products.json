@@ -1058,240 +1058,6 @@
     "image": "images/products/p0154.jpg"
   },
   {
-    "id": 155,
-    "name": "sunlasses (1)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0155.jpg"
-  },
-  {
-    "id": 156,
-    "name": "sunlasses (2)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0156.jpg"
-  },
-  {
-    "id": 157,
-    "name": "sunlasses (3)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0157.jpg"
-  },
-  {
-    "id": 158,
-    "name": "sunlasses (4)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0158.jpg"
-  },
-  {
-    "id": 159,
-    "name": "sunlasses (5)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0159.jpg"
-  },
-  {
-    "id": 160,
-    "name": "sunlasses (6)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0160.jpg"
-  },
-  {
-    "id": 161,
-    "name": "sunlasses (7)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0161.jpg"
-  },
-  {
-    "id": 162,
-    "name": "sunlasses (8)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0162.jpg"
-  },
-  {
-    "id": 163,
-    "name": "sunlasses (9)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0163.jpg"
-  },
-  {
-    "id": 164,
-    "name": "sunlasses (10)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0164.jpg"
-  },
-  {
-    "id": 165,
-    "name": "sunlasses (11)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0165.jpg"
-  },
-  {
-    "id": 166,
-    "name": "sunlasses (12)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0166.jpg"
-  },
-  {
-    "id": 167,
-    "name": "sunlasses (13)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0167.jpg"
-  },
-  {
-    "id": 168,
-    "name": "sunlasses (14)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0168.jpg"
-  },
-  {
-    "id": 169,
-    "name": "sunlasses (15)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0169.jpg"
-  },
-  {
-    "id": 170,
-    "name": "sunlasses (16)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0170.jpg"
-  },
-  {
-    "id": 171,
-    "name": "sunlasses (17)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0171.jpg"
-  },
-  {
-    "id": 172,
-    "name": "sunlasses (18)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0172.jpg"
-  },
-  {
-    "id": 173,
-    "name": "sunlasses (19)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0173.jpg"
-  },
-  {
-    "id": 174,
-    "name": "sunlasses (20)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0174.jpg"
-  },
-  {
-    "id": 175,
-    "name": "sunlasses (21)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0175.jpg"
-  },
-  {
-    "id": 176,
-    "name": "sunlasses (22)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0176.jpg"
-  },
-  {
-    "id": 177,
-    "name": "sunlasses (23)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0177.jpg"
-  },
-  {
-    "id": 178,
-    "name": "sunlasses (24)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0178.jpg"
-  },
-  {
-    "id": 179,
-    "name": "sunlasses (25)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0179.jpg"
-  },
-  {
-    "id": 180,
-    "name": "sunlasses (26)",
-    "category": "Accessories",
-    "subcategory": "Other",
-    "salePrice": 15,
-    "options": [],
-    "image": "images/products/p0180.jpg"
-  },
-  {
     "id": 181,
     "name": "bracelet (1)",
     "category": "Men's Collection",
@@ -1813,186 +1579,143 @@
     "image": "images/products/p0234.jpg"
   },
   {
-    "id": 235,
-    "name": "perfume (1)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 29,
+    "id": 253,
+    "name": "new-item (2)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Bracelets",
+    "salePrice": 4,
     "options": [
-      "Original 🎀 Made in  UAE"
+      "Ring 1",
+      "Ring 2",
+      "Ring 3"
     ],
-    "image": "images/products/p0235.jpg"
+    "image": "images/products/p0253.jpg"
   },
   {
-    "id": 236,
-    "name": "perfume (2)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 45,
+    "id": 254,
+    "name": "new-item (3)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Bracelets",
+    "salePrice": 5,
     "options": [
-      "Original 🎀 Made in  UAE"
+      "Bracelet 1",
+      "Bracelet 2",
+      "Bracelet 3"
     ],
-    "image": "images/products/p0236.jpg"
+    "image": "images/products/p0254.jpg"
   },
   {
-    "id": 237,
-    "name": "perfume (3)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 20,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0237.jpg"
-  },
-  {
-    "id": 238,
-    "name": "perfume (4)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 20,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0238.jpg"
-  },
-  {
-    "id": 239,
-    "name": "perfume (5)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 20,
+    "id": 255,
+    "name": "new-set (3)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Bracelets",
+    "salePrice": 7,
     "options": [],
-    "image": "images/products/p0239.jpg"
+    "image": "images/products/p0255.jpg"
   },
   {
-    "id": 240,
-    "name": "perfume (6)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 24,
+    "id": 256,
+    "name": "new-card",
+    "category": "Accessories",
+    "subcategory": "Earrings",
+    "salePrice": 4,
     "options": [],
-    "image": "images/products/p0240.jpg"
+    "image": "images/products/p0256.jpg"
   },
   {
-    "id": 241,
-    "name": "perfume (9)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 45,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0241.jpg"
+    "id": 257,
+    "name": "new-earring",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Earrings",
+    "salePrice": 2.3,
+    "options": [],
+    "image": "images/products/p0257.jpg"
   },
   {
-    "id": 242,
-    "name": "perfume (10)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0242.jpg"
+    "id": 258,
+    "name": "new-necklace (1)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Necklaces",
+    "salePrice": 8,
+    "options": [],
+    "image": "images/products/p0258.jpg"
   },
   {
-    "id": 243,
-    "name": "perfume (12)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 29,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0243.jpg"
+    "id": 259,
+    "name": "new-necklace (2)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Necklaces",
+    "salePrice": 4,
+    "options": [],
+    "image": "images/products/p0259.jpg"
   },
   {
-    "id": 244,
-    "name": "perfume (14)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0244.jpg"
+    "id": 260,
+    "name": "new-set (1)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Sets",
+    "salePrice": 10,
+    "options": [],
+    "image": "images/products/p0260.jpg"
   },
   {
-    "id": 245,
-    "name": "perfume (15)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
+    "id": 261,
+    "name": "new-ring (1)",
+    "category": "Accessories",
+    "subcategory": "Rings",
+    "salePrice": 2.5,
     "options": [
-      "Original 🎀 Made in  UAE"
+      "Ring 1",
+      "Ring 2",
+      "Ring 3",
+      "Ring 4"
     ],
-    "image": "images/products/p0245.jpg"
+    "image": "images/products/p0261.jpg"
   },
   {
-    "id": 246,
-    "name": "perfume (16)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
+    "id": 262,
+    "name": "new-ring (2)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Rings",
+    "salePrice": 3.5,
     "options": [
-      "Original 🎀 Made in  UAE"
+      "Ring 1",
+      "Ring 2",
+      "Ring 3",
+      "Ring 4"
     ],
-    "image": "images/products/p0246.jpg"
+    "image": "images/products/p0262.jpg"
   },
   {
-    "id": 247,
-    "name": "perfume (17)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0247.jpg"
+    "id": 263,
+    "name": "new-ring (3)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Rings",
+    "salePrice": 4,
+    "options": [],
+    "image": "images/products/p0263.jpg"
   },
   {
-    "id": 248,
-    "name": "perfume (18)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
+    "id": 264,
+    "name": "new-ring (4)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Rings",
+    "salePrice": 2.5,
     "options": [
-      "Original 🎀 Made in  UAE"
+      "Ring 1",
+      "Ring 2",
+      "Ring 3",
+      "Ring 4"
     ],
-    "image": "images/products/p0248.jpg"
+    "image": "images/products/p0264.jpg"
   },
   {
-    "id": 249,
-    "name": "perfume (19)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0249.jpg"
-  },
-  {
-    "id": 250,
-    "name": "perfume (20)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0250.jpg"
-  },
-  {
-    "id": 251,
-    "name": "perfume (21)",
-    "category": "Perfumes",
-    "subcategory": "Original",
-    "salePrice": 25,
-    "options": [
-      "Original 🎀 Made in  UAE"
-    ],
-    "image": "images/products/p0251.jpg"
+    "id": 265,
+    "name": "new-set (2)",
+    "category": "Brazilian Gold Accessories",
+    "subcategory": "Sets",
+    "salePrice": 10,
+    "options": [],
+    "image": "images/products/p0265.jpg"
   }
 ]
