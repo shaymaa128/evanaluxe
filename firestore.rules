@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == "shaymaaak3@gmail.com";
+    }
+    // Everyone can see products; only the owner can change them.
+    match /products/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    // Each customer can read/write only their own details.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

@@ -86,6 +86,7 @@
             margin-bottom: 4px;
         }
 
+        .saved-product-card .product-description { color:#7a6552; font-size:13px; margin:6px 0; overflow-wrap:anywhere; }
         .no-saved-products {
             color: #7a6552;
             padding: 20px;
@@ -283,11 +284,19 @@ try {
 
        let products = [];
 
+// 0) Cloud list (Firebase): used first when the cloud is set up and has products
+try {
+    const cloud = await import("./cloud.js");
+    if (cloud.configured) products = await cloud.listProducts();
+} catch (e) { console.warn("Cloud products not available:", e); }
+
 // 1) Published list: works for every visitor
+if (!products.length) {
 try {
     const response = await fetch("products.json", { cache: "no-store" });
     if (response.ok) products = await response.json();
 } catch (e) { /* no products.json yet */ }
+}
 
 // 2) Fallback: products saved in this browser
 if (!products.length) {
@@ -425,6 +434,11 @@ if (!products.length) {
                             price.textContent =
                                 "$" + Number(product.salePrice).toFixed(2);
 
+                            const descLine = document.createElement("p");
+                            descLine.className = "product-description";
+                            descLine.textContent = product.description || "";
+                            descLine.hidden = !product.description;
+
                             const optionList =
                                 Array.isArray(product.options) &&
                                 product.options.length
@@ -465,6 +479,7 @@ if (!products.length) {
                                 image,
                                 name,
                                 price,
+                                descLine,
                                 optionLabel,
                                 addButton
                             );

@@ -2099,3 +2099,12 @@ mark.search-hit.current { background: var(--brown); color: #fff; box-shadow: 0 0
     .hero-image-only .hero-banner { min-height: 360px; padding: 70px 6%; }
     .hero-banner-eyebrow { font-size: 10px; letter-spacing: 3px; }
 }
+
+/* ---------- Gmail sign-in checkout ---------- */
+.checkout-box form[hidden], .checkout-box #checkoutSignin[hidden] { display: none; }
+.checkout-account { margin-bottom: 14px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.checkout-account strong { color: var(--choc); overflow-wrap: anywhere; }
+.link-button { background: none; border: 0; padding: 0; color: var(--brown); text-decoration: underline; cursor: pointer; font: inherit; }
+.checkout-box input[readonly] { background: var(--cream); color: var(--muted); }
+.google-signin { margin-top: 6px; }
+.checkout-box [hidden] { display: none !important; }

@@ -165,7 +165,15 @@
             <h2 id="checkoutTitle">Delivery Details</h2>
             <p class="checkout-intro">Please enter your details so we can prepare your order.</p>
 
+            <div id="checkoutSignin" hidden>
+                <p class="checkout-intro">Sign in with your Gmail account to continue. Your details are saved to your account for next time.</p>
+                <button type="button" class="checkout-button google-signin" id="googleSignin">SIGN IN WITH GOOGLE</button>
+                <p class="checkout-error" id="signinError" role="alert"></p>
+            </div>
+
             <form id="checkoutForm" novalidate>
+                <p class="checkout-account" id="checkoutAccount" hidden>Signed in as <strong id="accountEmail"></strong> · <button type="button" class="link-button" id="accountSignout">Not you? Sign out</button></p>
+
                 <label for="customerName">Full name</label>
                 <input type="text" id="customerName" name="name" autocomplete="name" required>
 
@@ -174,6 +182,9 @@
 
                 <label for="customerPhone">Phone number</label>
                 <input type="tel" id="customerPhone" name="phone" autocomplete="tel" inputmode="tel" required>
+
+                <label for="customerEmail" id="customerEmailLabel" hidden>Email (from your Gmail account)</label>
+                <input type="email" id="customerEmail" name="email" autocomplete="email" readonly hidden>
 
                 <p class="checkout-error" id="checkoutError" role="alert"></p>
 
@@ -387,19 +398,86 @@
         }
     }
 
+    /* ---------- Gmail sign-in (loaded only when the cloud is set up) ---------- */
+    let cloudPromise = null;
+    function getCloud() {
+        if (!cloudPromise) {
+            cloudPromise = import("./cloud.js")
+                .then((m) => (m.configured ? m : null))
+                .catch((error) => { console.warn("Cloud not available:", error); return null; });
+        }
+        return cloudPromise;
+    }
+
+    async function showCheckoutStep() {
+        const cloud = await getCloud();
+        const user = cloud ? (await cloud.ready(), cloud.currentUser()) : null;
+        const signin = $("checkoutSignin"), form = $("checkoutForm");
+        let saved = readCustomer();
+
+        $("checkoutError").textContent = "";
+        $("signinError").textContent = "";
+
+        if (cloud && !user) {                    // step 1: sign in
+            signin.hidden = false;
+            form.hidden = true;
+            $("checkoutTitle").textContent = "Sign In";
+            return;
+        }
+
+        signin.hidden = true;
+        form.hidden = false;
+        $("checkoutTitle").textContent = "Delivery Details";
+        const guest = !cloud;
+        $("checkoutAccount").hidden = guest;
+        $("customerEmail").hidden = guest;
+        $("customerEmailLabel").hidden = guest;
+
+        if (user) {                              // step 2: details (saved on the account)
+            $("accountEmail").textContent = user.email || "";
+            $("customerEmail").value = user.email || "";
+            try {
+                const profile = await cloud.getProfile();
+                if (profile) saved = { ...saved, ...profile };
+            } catch (error) { console.warn("Could not load saved details:", error); }
+        }
+        $("customerName").value = saved.name || (user && user.displayName) || "";
+        $("customerAddress").value = saved.address || "";
+        $("customerPhone").value = saved.phone || "";
+        $("customerName").focus();
+    }
+
+    async function googleSignin() {
+        const cloud = await getCloud();
+        if (!cloud) return;
+        const button = $("googleSignin");
+        button.disabled = true;
+        try {
+            await cloud.signIn();
+            await showCheckoutStep();
+        } catch (error) {
+            console.warn(error);
+            if (!(error && (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request"))) {
+                $("signinError").textContent = "Sign-in did not work. Please try again.";
+            }
+        }
+        button.disabled = false;
+    }
+
+    async function accountSignout() {
+        const cloud = await getCloud();
+        if (cloud) await cloud.signOut();
+        await showCheckoutStep();
+    }
+
     function openCheckoutForm() {
         if (cart.size === 0) {
             window.alert("Your shopping bag is empty. Add a product before ordering.");
             return;
         }
-        const saved = readCustomer();
-        $("customerName").value = saved.name || "";
-        $("customerAddress").value = saved.address || "";
-        $("customerPhone").value = saved.phone || "";
-        $("checkoutError").textContent = "";
         $("checkoutModal").hidden = false;
         loadJsPdf();                       // load the PDF tool now so sending is instant
-        $("customerName").focus();
+        showCheckoutStep();
     }
 
     function closeCheckoutForm() {
@@ -445,6 +523,7 @@
             `Name: ${order.customer.name}`,
             `Address: ${order.customer.address}`,
             `Phone: ${order.customer.phone}`,
+            ...(order.customer.email ? [`Email: ${order.customer.email}`] : []),
             "",
             "ORDER DETAILS"
         ];
@@ -498,7 +577,8 @@
         doc.setFontSize(10);
         [["Name", order.customer.name],
          ["Address", order.customer.address],
-         ["Phone", order.customer.phone]].forEach(([label, value]) => {
+         ["Phone", order.customer.phone],
+         ...(order.customer.email ? [["Email", order.customer.email]] : [])].forEach(([label, value]) => {
             const wrapped = doc.splitTextToSize(String(value), W - M * 2 - 25);
             doc.setFont("helvetica", "bold");
             doc.text(`${label}:`, M, y);
@@ -640,7 +720,13 @@
         const button = $("checkoutSubmit");
         button.disabled = true;
 
-        const order = buildOrder({ name, address, phone });
+        const email = ($("customerEmail").value || "").trim();
+        const customer = email ? { name, address, phone, email } : { name, address, phone };
+        if (email) {                       // save details on the Gmail account (best effort)
+            try { const cloud = await getCloud(); if (cloud) await cloud.saveProfile(customer); }
+            catch (err) { console.warn("Could not save details to the account:", err); }
+        }
+        const order = buildOrder(customer);
         saveOrder(order);
         const result = await deliverOrder(order);
 
@@ -887,6 +973,8 @@
         $("checkoutButton")?.addEventListener("click", openCheckoutForm);
         $("checkoutClose")?.addEventListener("click", closeCheckoutForm);
         $("checkoutForm")?.addEventListener("submit", submitCheckout);
+        $("googleSignin")?.addEventListener("click", googleSignin);
+        $("accountSignout")?.addEventListener("click", accountSignout);
         $("clearCartButton")?.addEventListener("click", () => {
             if (cart.size === 0) return;
             cart.clear();
