@@ -2108,3 +2108,72 @@ mark.search-hit.current { background: var(--brown); color: #fff; box-shadow: 0 0
 .checkout-box input[readonly] { background: var(--cream); color: var(--muted); }
 .google-signin { margin-top: 6px; }
 .checkout-box [hidden] { display: none !important; }
+
+/* ---------- Whish popup (after checkout) ---------- */
+.whish-box { text-align: center; }
+.whish-box .checkout-intro strong { color: var(--choc); }
+.whish-amount { margin: 4px 0 12px; color: var(--brown); font: normal 44px Georgia, serif; }
+.whish-box .link-button { margin-top: 14px; font-size: 13px; }
+
+/* ---------- Swipe gallery (products with several pictures) ---------- */
+.swipe-gallery { position: relative; width: 100%; height: 100%; }
+.swipe-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+.swipe-track::-webkit-scrollbar { display: none; }
+.swipe-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: center; scroll-snap-stop: always; }
+.swipe-gallery .swipe-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+.swipe-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    width: 32px;
+    height: 32px;
+    margin-top: -16px;
+    padding: 0 0 3px;
+    background: rgba(255, 253, 249, 0.88);
+    color: var(--brown);
+    border: 1px solid var(--brown);
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.swipe-arrow:hover { background: var(--brown); color: #fff; }
+.swipe-prev { left: 8px; }
+.swipe-next { right: 8px; }
+.swipe-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+}
+.swipe-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 253, 249, 0.8);
+    border: 1px solid var(--brown);
+}
+.swipe-dots span.active { background: var(--brown); }
+@media (hover: none) { .swipe-arrow { display: none; } }

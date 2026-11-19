@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collection Manager | EVANA LUXE</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px; background: #000; color: #f3e9d2; font-family: Georgia, serif; }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  h1 { color: #d4af37; letter-spacing: 3px; font-size: 1.4rem; margin: 0 0 4px; }
+  h2 { color: #d4af37; font-size: 1.1rem; margin: 28px 0 12px; border-left: 4px solid #d4af37; padding-left: 10px; }
+  a { color: #d4af37; }
+  .panel { background: #111; border: 1px solid #333; border-radius: 10px; padding: 16px; }
+  label { display: block; margin: 10px 0 4px; font-size: .9rem; }
+  input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1c1c1c; color: #fff; font-size: 1rem; }
+  .hint { font-size: .8rem; color: #aaa; margin-top: 3px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
+  button { background: #d4af37; color: #000; border: 0; padding: 12px 22px; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 14px; }
+  button.danger { background: #8b1a1a; color: #fff; margin-top: 8px; padding: 9px 14px; font-size: .9rem; }
+  button.light { background: transparent; color: #d4af37; border: 1px solid #d4af37; }
+  button:disabled { opacity: .5; cursor: wait; }
+  .one { display: flex; gap: 10px; align-items: center; margin: 14px 0 4px; }
+  .one input { width: auto; }
+  .photo-row { display: grid; grid-template-columns: 70px 1fr 110px; gap: 10px; align-items: center; margin-top: 10px; background: #1a1a1a; padding: 8px; border-radius: 8px; }
+  .photo-row .thumb { position: relative; width: 70px; height: 70px; }
+  .photo-row img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; display: block; }
+  .photo-row .count { position: absolute; right: 2px; bottom: 2px; background: #d4af37; color: #000; border-radius: 10px; padding: 0 6px; font-size: .75rem; }
+  @media (max-width: 600px) {
+    .photo-row { grid-template-columns: 70px 1fr; }
+    .photo-row .pprice { grid-column: 1 / -1; }
+  }
+  .msg { margin-top: 10px; min-height: 1.2em; overflow-wrap: anywhere; }
+  .msg.err { color: #ff7b7b; } .msg.ok { color: #7bff9b; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-top: 12px; }
+  .card { background: #111; border: 1px solid #333; border-radius: 10px; overflow: hidden; }
+  .card img { width: 100%; height: 170px; object-fit: cover; display: block; }
+  .card .info { padding: 10px; font-size: .9rem; overflow-wrap: anywhere; }
+  .card .cat { color: #aaa; font-size: .75rem; }
+  .card button { width: 100%; }
+  .bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <h1>EVANA LUXE — COLLECTION MANAGER</h1>
+    <span id="whoami" class="hint"></span>
+  </div>
+  <p><a href="collection.html">View collection page</a> · <a href="index.html">Back to shop</a></p>
+
+  <div class="panel" id="gate">
+    <p id="gateMsg">Loading…</p>
+    <p class="hint">On your phone, open this page in Chrome or Safari (not inside WhatsApp or Instagram) to sign in.</p>
+    <button id="signInBtn" type="button" hidden>Sign in with Google</button>
+    <button id="signOutBtn" type="button" class="light" hidden>Sign out</button>
+  </div>
+
+  <div id="area" hidden>
+    <h2>Add new items</h2>
+    <div class="panel">
+      <div class="row2">
+        <div>
+          <label for="category">Category (section name on the page)</label>
+          <input id="category" list="categoryList" placeholder="e.g. New Collection" value="New Collection">
+          <datalist id="categoryList"></datalist>
+        </div>
+        <div>
+          <label for="tag">Small label above name (optional)</label>
+          <input id="tag" placeholder="e.g. RINGS">
+        </div>
+      </div>
+      <div class="row2">
+        <div>
+          <label for="optionLabel">Dropdown title (optional)</label>
+          <input id="optionLabel" placeholder="e.g. Choose your ring">
+        </div>
+        <div>
+          <label for="options">Options (separate with commas)</label>
+          <input id="options" placeholder="Ring 1, Ring 2, Ring 3">
+          <p class="hint">Leave empty for no dropdown.</p>
+        </div>
+      </div>
+
+      <label for="photos">Photos (select several at once)</label>
+      <input type="file" id="photos" accept="image/*" multiple>
+      <label class="one"><input type="checkbox" id="oneItem"> All selected photos are ONE item (customers swipe between them)</label>
+      <p class="hint">Unticked: each photo becomes its own item. Up to 6 photos for one item.</p>
+
+      <div id="photoRows"></div>
+
+      <button id="saveBtn" type="button">SAVE ITEMS</button>
+      <p class="msg" id="msg"></p>
+    </div>
+
+    <h2>Saved items</h2>
+    <p class="hint">These are live on the collection page for every customer right after saving.</p>
+    <button id="clearAllBtn" type="button" class="danger">DELETE ALL PRODUCTS</button>
+    <p class="msg" id="clearMsg"></p>
+    <p class="hint" id="savedCount"></p>
+    <div class="grid" id="saved"></div>
+  </div>
+</div>
+
+<script type="module">
+import * as cloud from "./cloud.js";
+
+const $ = (id) => document.getElementById(id);
+const MAX_PHOTOS_PER_ITEM = 6;
+let pending = [];   // {file, url}
+let saved = [];
+
+function say(id, text, cls) { const m = $(id); m.textContent = text; m.className = "msg " + (cls || ""); }
+
+function signInHelp(e) {
+  const c = (e && e.code) || "";
+  if (c === "auth/unauthorized-domain") return "This website address is not allowed in Firebase yet. In Firebase Console go to Authentication → Settings → Authorized domains and add: " + location.hostname;
+  if (c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request") return "The sign-in window was closed. Tap Sign in again.";
+  if (c === "auth/popup-blocked") return "Your browser blocked the sign-in window. Allow pop-ups for this site and tap Sign in again.";
+  return "Sign-in failed: " + ((e && e.message) || e);
+}
+
+/* ----- photo rows ----- */
+function groups() {
+  return $("oneItem").checked ? (pending.length ? [pending] : []) : pending.map((p) => [p]);
+}
+function renderRows() {
+  const box = $("photoRows");
+  box.replaceChildren();
+  groups().forEach((g) => {
+    const row = document.createElement("div");
+    row.className = "photo-row";
+    const thumb = document.createElement("div");
+    thumb.className = "thumb";
+    const img = document.createElement("img");
+    img.src = g[0].url;
+    thumb.append(img);
+    if (g.length > 1) {
+      const c = document.createElement("span");
+      c.className = "count"; c.textContent = g.length + " photos";
+      thumb.append(c);
+    }
+    const name = document.createElement("input");
+    name.placeholder = "Item name"; name.className = "pname";
+    const price = document.createElement("input");
+    price.type = "number"; price.step = "0.01"; price.min = "0"; price.inputMode = "decimal";
+    price.placeholder = "Price $"; price.className = "pprice";
+    row.append(thumb, name, price);
+    box.append(row);
+  });
+}
+$("photos").addEventListener("change", function () {
+  pending.forEach((p) => URL.revokeObjectURL(p.url));
+  pending = [...this.files].filter((f) => f.type.startsWith("image/")).map((f) => ({ file: f, url: URL.createObjectURL(f) }));
+  renderRows();
+});
+$("oneItem").addEventListener("change", renderRows);
+
+/* ----- save ----- */
+$("saveBtn").addEventListener("click", async function () {
+  const btn = this;
+  if (!pending.length) { say("msg", "Choose at least one photo first.", "err"); return; }
+  const category = $("category").value.trim();
+  if (!category) { say("msg", "Please type a category name.", "err"); return; }
+  const gs = groups();
+  const names = document.querySelectorAll(".pname");
+  const prices = document.querySelectorAll(".pprice");
+  for (let i = 0; i < gs.length; i++) {
+    if (gs[i].length > MAX_PHOTOS_PER_ITEM) { say("msg", "One item can have up to " + MAX_PHOTOS_PER_ITEM + " photos.", "err"); return; }
+    if (names[i].value.trim().length < 2) { say("msg", "Type a name for every item.", "err"); return; }
+    const pr = parseFloat(prices[i].value);
+    if (!isFinite(pr) || pr < 0) { say("msg", "Type a valid price for every item.", "err"); return; }
+  }
+  const options = $("options").value.split(",").map((s) => s.trim()).filter(Boolean);
+  btn.disabled = true;
+  try {
+    const prepared = [];
+    for (let i = 0; i < gs.length; i++) {
+      say("msg", "Preparing photos " + (i + 1) + " of " + gs.length + "…");
+      const images = await cloud.uploadImages(gs[i].map((p) => p.file));
+      if (cloud.imagesSize(images) > cloud.MAX_IMAGES_CHARS) throw new Error("\"" + names[i].value.trim() + "\" has too many photos. Use fewer.");
+      prepared.push(images);
+    }
+    for (let i = 0; i < gs.length; i++) {
+      say("msg", "Saving " + (i + 1) + " of " + gs.length + "…");
+      await cloud.saveCollectionItem(null, {
+        category, tag: $("tag").value.trim(), optionLabel: $("optionLabel").value.trim(), options,
+        name: names[i].value.trim(), price: parseFloat(prices[i].value),
+        image: prepared[i][0], images: prepared[i], createdAt: Date.now() + i
+      });
+    }
+    say("msg", gs.length + " item(s) saved. They are now on the collection page.", "ok");
+    pending.forEach((p) => URL.revokeObjectURL(p.url));
+    pending = [];
+    $("photos").value = "";
+    renderRows();
+    await loadSaved();
+  } catch (e) {
+    say("msg", "Could not save: " + (e && e.message ? e.message : e), "err");
+  }
+  btn.disabled = false;
+});
+
+/* ----- delete all products ----- */
+$("clearAllBtn").addEventListener("click", async () => {
+  if (!saved.length) { say("clearMsg", "There are no saved products to delete.", "err"); return; }
+  if (!confirm("Delete ALL " + saved.length + " saved products from the collection page? This cannot be undone.")) return;
+  try {
+    await cloud.deleteCollectionMany(saved.map((p) => p.id));
+    await loadSaved();
+    say("clearMsg", "All products were deleted.", "ok");
+  } catch (e) {
+    say("clearMsg", "Could not delete: " + (e && e.message ? e.message : e), "err");
+  }
+});
+
+/* ----- saved list ----- */
+function renderSaved() {
+  const grid = $("saved");
+  grid.replaceChildren();
+  $("savedCount").textContent = saved.length + " item(s) in total";
+  if (!saved.length) {
+    const p = document.createElement("p"); p.textContent = "No saved items yet."; grid.append(p);
+  }
+  const cats = {};
+  saved.forEach((it) => {
+    cats[it.category] = true;
+    const card = document.createElement("div"); card.className = "card";
+    const img = document.createElement("img"); img.src = it.image || (it.images && it.images[0]) || ""; img.alt = it.name;
+    const info = document.createElement("div"); info.className = "info";
+    const n = (Array.isArray(it.images) && it.images.length) || 1;
+    const cat = document.createElement("div"); cat.className = "cat"; cat.textContent = it.category + (n > 1 ? " · " + n + " photos (swipe)" : "");
+    const nm = document.createElement("div"); nm.textContent = it.name;
+    const pr = document.createElement("div"); pr.textContent = "$ " + Number(it.price).toFixed(2);
+    const edit = document.createElement("button"); edit.type = "button"; edit.className = "light"; edit.textContent = "Edit";
+    edit.addEventListener("click", async () => {
+      const name = prompt("Item name:", it.name); if (name === null) return;
+      const priceText = prompt("Price in $:", it.price); if (priceText === null) return;
+      const category = prompt("Category (section name):", it.category); if (category === null) return;
+      const price = parseFloat(priceText);
+      if (name.trim().length < 2 || !isFinite(price) || price < 0 || !category.trim()) { alert("Please enter a valid name, price and category."); return; }
+      try { await cloud.saveCollectionItem(it.id, { name: name.trim(), price, category: category.trim() }); await loadSaved(); }
+      catch (e) { say("clearMsg", "Could not save: " + (e && e.message ? e.message : e), "err"); }
+    });
+    const del = document.createElement("button"); del.type = "button"; del.className = "danger"; del.textContent = "Delete";
+    del.addEventListener("click", async () => {
+      if (!confirm("Delete \"" + it.name + "\"?")) return;
+      try { await cloud.deleteCollectionMany([it.id]); await loadSaved(); }
+      catch (e) { say("clearMsg", "Could not delete: " + (e && e.message ? e.message : e), "err"); }
+    });
+    info.append(cat, nm, pr, edit, del);
+    card.append(img, info);
+    grid.append(card);
+  });
+  const dl = $("categoryList"); dl.replaceChildren();
+  Object.keys(cats).forEach((c) => { const o = document.createElement("option"); o.value = c; dl.append(o); });
+}
+async function loadSaved() { saved = await cloud.listCollection(); renderSaved(); }
+
+/* ----- owner sign-in gate ----- */
+function showGate(user) {
+  const admin = cloud.isAdminUser(user);
+  $("area").hidden = !admin;
+  $("signInBtn").hidden = !!user;
+  $("signOutBtn").hidden = !user;
+  $("whoami").textContent = user ? user.email : "";
+  $("gateMsg").textContent = !user ? "Sign in with the owner Gmail account to manage the collection."
+    : admin ? "Signed in as owner." : "This Gmail account is not the owner account. Please sign out and use the owner Gmail.";
+  if (admin) loadSaved().catch((e) => say("msg", "Could not load items: " + e.message, "err"));
+}
+(async () => {
+  if (!cloud.configured) { $("gateMsg").textContent = "The cloud is not set up yet. Fill in firebase-config.js, then push to GitHub."; return; }
+  $("signInBtn").onclick = async () => { try { await cloud.signIn(); } catch (e) { $("gateMsg").textContent = signInHelp(e); } };
+  $("signOutBtn").onclick = () => cloud.signOut();
+  await cloud.onUser(showGate);
+})();
+</script>
+</body>
+</html>

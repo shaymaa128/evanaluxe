@@ -6,6 +6,7 @@ const V = "10.12.2";
 export const configured = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 let fb = null;       // firebase modules + instances
+let productsCache = null;
 let readyPromise = null;
 
 async function init() {
@@ -20,6 +21,8 @@ async function init() {
     ]);
     const a = app.initializeApp(firebaseConfig);
     fb = { auth, store, authInst: auth.getAuth(a), db: store.getFirestore(a) };
+    try { await auth.setPersistence(fb.authInst, auth.browserLocalPersistence); } catch (e) { /* ignore */ }
+    try { await auth.getRedirectResult(fb.authInst); } catch (e) { console.warn("Redirect sign-in:", e); }
     await new Promise((res) => {
       const off = auth.onAuthStateChanged(fb.authInst, () => { off(); res(); });
     });
@@ -40,13 +43,14 @@ export async function onUser(cb) {
 }
 
 export async function signIn() {
-  await init();
+  if (!fb) await init();   // normally ready already, so the popup still counts as opened by the tap
   const provider = new fb.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
   try {
     return (await fb.auth.signInWithPopup(fb.authInst, provider)).user;
   } catch (e) {
-    if (e && (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")) {
+    const c = e && e.code;
+    if (c === "auth/popup-blocked" || c === "auth/operation-not-supported-in-this-environment" || c === "auth/web-storage-unsupported") {
       await fb.auth.signInWithRedirect(fb.authInst, provider);
       return null;
     }
@@ -75,13 +79,20 @@ export async function saveProfile(p) {
 
 /* ---- products ---- */
 export async function listProducts() {
-  await init();
-  const snap = await fb.store.getDocs(fb.store.collection(fb.db, "products"));
-  return snap.docs.map((d) => ({ ...d.data(), id: d.id }))
-    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (!productsCache) {
+    productsCache = (async () => {
+      await init();
+      const snap = await fb.store.getDocs(fb.store.collection(fb.db, "products"));
+      return snap.docs.map((d) => ({ ...d.data(), id: d.id }))
+        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    })();
+    productsCache.catch(() => { productsCache = null; });
+  }
+  return (await productsCache).slice();
 }
 export async function saveProduct(id, data) {
   await init();
+  productsCache = null;
   const ref = id ? fb.store.doc(fb.db, "products", String(id))
                  : fb.store.doc(fb.store.collection(fb.db, "products"));
   await fb.store.setDoc(ref, data, { merge: true });
@@ -89,10 +100,12 @@ export async function saveProduct(id, data) {
 }
 export async function deleteProduct(id) {
   await init();
+  productsCache = null;
   await fb.store.deleteDoc(fb.store.doc(fb.db, "products", String(id)));
 }
 export async function saveMany(items) {          // items: [{id, data}]
   await init();
+  productsCache = null;
   for (let i = 0; i < items.length; i += 400) {
     const batch = fb.store.writeBatch(fb.db);
     items.slice(i, i + 400).forEach((it) =>
@@ -102,6 +115,7 @@ export async function saveMany(items) {          // items: [{id, data}]
 }
 export async function deleteMany(ids) {
   await init();
+  productsCache = null;
   for (let i = 0; i < ids.length; i += 400) {
     const batch = fb.store.writeBatch(fb.db);
     ids.slice(i, i + 400).forEach((id) => batch.delete(fb.store.doc(fb.db, "products", String(id))));
@@ -131,9 +145,51 @@ export async function uploadImage(file) {
   return url;
 }
 
+/* ---- several pictures per product / collection item (each one shrunk) ---- */
+export const MAX_IMAGES_CHARS = 900000;   // Firestore allows about 1 MB per document
+export async function uploadImages(files) {
+  const out = [];
+  for (const f of files) {
+    let url = "";
+    for (const [max, q] of [[800, 0.72], [700, 0.62], [600, 0.52], [500, 0.45]]) {
+      url = await shrink(f, max, q);
+      if (url.length < 150000) break;
+    }
+    out.push(url);
+  }
+  return out;
+}
+export function imagesSize(list) {
+  return (list || []).reduce((n, u) => n + String(u).length, 0);
+}
+
+/* ---- new collection page items (cloud, so you can edit from your phone) ---- */
+export async function listCollection() {
+  await init();
+  const snap = await fb.store.getDocs(fb.store.collection(fb.db, "collection"));
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id }))
+    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+}
+export async function saveCollectionItem(id, data) {
+  await init();
+  const ref = id ? fb.store.doc(fb.db, "collection", String(id))
+                 : fb.store.doc(fb.store.collection(fb.db, "collection"));
+  await fb.store.setDoc(ref, data, { merge: true });
+  return ref.id;
+}
+export async function deleteCollectionMany(ids) {
+  await init();
+  for (let i = 0; i < ids.length; i += 400) {
+    const batch = fb.store.writeBatch(fb.db);
+    ids.slice(i, i + 400).forEach((id) => batch.delete(fb.store.doc(fb.db, "collection", String(id))));
+    await batch.commit();
+  }
+}
+
 window.EvanaCloud = {
   configured, ready, currentUser, onUser, signIn, signOut, isAdminUser,
   getProfile, saveProfile, listProducts, saveProduct, deleteProduct,
-  saveMany, deleteMany, uploadImage, ADMIN_EMAIL
+  saveMany, deleteMany, uploadImage, uploadImages, imagesSize, MAX_IMAGES_CHARS,
+  listCollection, saveCollectionItem, deleteCollectionMany, ADMIN_EMAIL
 };
 window.dispatchEvent(new Event("evanacloud-ready"));

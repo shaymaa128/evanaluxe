@@ -152,7 +152,7 @@
                        +961 71 102 868
                     </a>.
                 </p>
-                <p>After checkout, enter your details so that your order receipt (PDF) is sent to us on WhatsApp.</p>
+                <p>After checkout, a pop-up shows the total to send on Whish, then your order receipt (PDF) is sent to us on WhatsApp.</p>
             </div>
 
         </div>
@@ -165,14 +165,7 @@
             <h2 id="checkoutTitle">Delivery Details</h2>
             <p class="checkout-intro">Please enter your details so we can prepare your order.</p>
 
-            <div id="checkoutSignin" hidden>
-                <p class="checkout-intro">Sign in with your Gmail account to continue. Your details are saved to your account for next time.</p>
-                <button type="button" class="checkout-button google-signin" id="googleSignin">SIGN IN WITH GOOGLE</button>
-                <p class="checkout-error" id="signinError" role="alert"></p>
-            </div>
-
             <form id="checkoutForm" novalidate>
-                <p class="checkout-account" id="checkoutAccount" hidden>Signed in as <strong id="accountEmail"></strong> · <button type="button" class="link-button" id="accountSignout">Not you? Sign out</button></p>
 
                 <label for="customerName">Full name</label>
                 <input type="text" id="customerName" name="name" autocomplete="name" required>
@@ -183,14 +176,24 @@
                 <label for="customerPhone">Phone number</label>
                 <input type="tel" id="customerPhone" name="phone" autocomplete="tel" inputmode="tel" required>
 
-                <label for="customerEmail" id="customerEmailLabel" hidden>Email (from your Gmail account)</label>
-                <input type="email" id="customerEmail" name="email" autocomplete="email" readonly hidden>
-
                 <p class="checkout-error" id="checkoutError" role="alert"></p>
 
-                <button type="submit" class="checkout-button" id="checkoutSubmit">SEND ORDER ON WHATSAPP</button>
-                <p class="checkout-note">A PDF receipt with your details and bag is created. On a phone, choose WhatsApp to send it. On a computer the PDF downloads and WhatsApp opens — attach the PDF there.</p>
+                <button type="submit" class="checkout-button" id="checkoutSubmit">CONTINUE TO PAYMENT</button>
+                <p class="checkout-note">No account or email needed. Next you will see the amount to send on Whish, then your PDF receipt is sent to us on WhatsApp.</p>
             </form>
+        </div>
+    </div>
+
+    <div class="checkout-modal" id="whishModal" hidden>
+        <div class="checkout-box whish-box" role="dialog" aria-modal="true" aria-labelledby="whishTitle">
+            <p class="eyebrow">EVANA LUXE</p>
+            <h2 id="whishTitle">GO TO WHISH</h2>
+            <p class="checkout-intro">Open the Whish app and send the total amount below to <strong>+961 71 102 868</strong>.</p>
+            <p class="whish-amount" id="whishAmount">$0.00</p>
+            <p class="checkout-intro">Delivery fees are included in this total.</p>
+            <p class="checkout-intro">Tap OK and WhatsApp will open so your order receipt (PDF) is sent to us.</p>
+            <button type="button" class="checkout-button" id="whishOk">OK</button>
+            <button type="button" class="link-button" id="whishBack">Back</button>
         </div>
     </div>
 `);
@@ -322,7 +325,7 @@
 
         const src = img.currentSrc || img.src;
 
-        if (src.startsWith("blob:")) {
+        if (src.startsWith("blob:") || src.startsWith("data:")) {
             try {
                 const max = 160;
                 const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
@@ -398,76 +401,13 @@
         }
     }
 
-    /* ---------- Gmail sign-in (loaded only when the cloud is set up) ---------- */
-    let cloudPromise = null;
-    function getCloud() {
-        if (!cloudPromise) {
-            cloudPromise = import("./cloud.js")
-                .then((m) => (m.configured ? m : null))
-                .catch((error) => { console.warn("Cloud not available:", error); return null; });
-        }
-        return cloudPromise;
-    }
-
-    async function showCheckoutStep() {
-        const cloud = await getCloud();
-        const user = cloud ? (await cloud.ready(), cloud.currentUser()) : null;
-        const signin = $("checkoutSignin"), form = $("checkoutForm");
-        let saved = readCustomer();
-
+    function showCheckoutStep() {
+        const saved = readCustomer();
         $("checkoutError").textContent = "";
-        $("signinError").textContent = "";
-
-        if (cloud && !user) {                    // step 1: sign in
-            signin.hidden = false;
-            form.hidden = true;
-            $("checkoutTitle").textContent = "Sign In";
-            return;
-        }
-
-        signin.hidden = true;
-        form.hidden = false;
-        $("checkoutTitle").textContent = "Delivery Details";
-        const guest = !cloud;
-        $("checkoutAccount").hidden = guest;
-        $("customerEmail").hidden = guest;
-        $("customerEmailLabel").hidden = guest;
-
-        if (user) {                              // step 2: details (saved on the account)
-            $("accountEmail").textContent = user.email || "";
-            $("customerEmail").value = user.email || "";
-            try {
-                const profile = await cloud.getProfile();
-                if (profile) saved = { ...saved, ...profile };
-            } catch (error) { console.warn("Could not load saved details:", error); }
-        }
-        $("customerName").value = saved.name || (user && user.displayName) || "";
+        $("customerName").value = saved.name || "";
         $("customerAddress").value = saved.address || "";
         $("customerPhone").value = saved.phone || "";
         $("customerName").focus();
-    }
-
-    async function googleSignin() {
-        const cloud = await getCloud();
-        if (!cloud) return;
-        const button = $("googleSignin");
-        button.disabled = true;
-        try {
-            await cloud.signIn();
-            await showCheckoutStep();
-        } catch (error) {
-            console.warn(error);
-            if (!(error && (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request"))) {
-                $("signinError").textContent = "Sign-in did not work. Please try again.";
-            }
-        }
-        button.disabled = false;
-    }
-
-    async function accountSignout() {
-        const cloud = await getCloud();
-        if (cloud) await cloud.signOut();
-        await showCheckoutStep();
     }
 
     function openCheckoutForm() {
@@ -675,6 +615,7 @@
     async function deliverOrder(order) {
         const message = buildMessage(order);
         let file = null;
+        await loadJsPdf();
 
         if (window.jspdf && window.jspdf.jsPDF) {
             try {
@@ -704,7 +645,9 @@
         return file ? "downloaded" : "text-only";
     }
 
-    async function submitCheckout(event) {
+    let pendingOrder = null;
+
+    function submitCheckout(event) {
         event.preventDefault();
         const error = $("checkoutError");
         const name = $("customerName").value.trim();
@@ -717,23 +660,26 @@
         if (cart.size === 0) { error.textContent = "Your bag is empty."; return; }
 
         error.textContent = "";
-        const button = $("checkoutSubmit");
-        button.disabled = true;
-
-        const email = ($("customerEmail").value || "").trim();
-        const customer = email ? { name, address, phone, email } : { name, address, phone };
-        if (email) {                       // save details on the Gmail account (best effort)
-            try { const cloud = await getCloud(); if (cloud) await cloud.saveProfile(customer); }
-            catch (err) { console.warn("Could not save details to the account:", err); }
-        }
-        const order = buildOrder(customer);
-        saveOrder(order);
-        const result = await deliverOrder(order);
-
-        button.disabled = false;
-        if (result === "cancelled") return;
-
+        pendingOrder = buildOrder({ name, address, phone });
+        saveOrder(pendingOrder);
         closeCheckoutForm();
+
+        // Popup: send the total on Whish, then OK opens WhatsApp with the PDF
+        $("whishAmount").textContent = money(pendingOrder.total);
+        $("whishModal").hidden = false;
+        $("whishOk").focus();
+    }
+
+    async function confirmWhish() {
+        if (!pendingOrder) { $("whishModal").hidden = true; return; }
+        const button = $("whishOk");
+        button.disabled = true;
+        const result = await deliverOrder(pendingOrder);
+        button.disabled = false;
+        if (result === "cancelled") return;      // popup stays so the customer can try again
+
+        pendingOrder = null;
+        $("whishModal").hidden = true;
         if (result === "downloaded") {
             window.alert("Your PDF receipt was downloaded and WhatsApp is opening.\nPlease attach the PDF in the chat and tap Send.");
         } else if (result === "text-only") {
@@ -883,6 +829,123 @@
         attempt(3);
     }
     /* =====================================================
+       SWIPE GALLERY: a product with several pictures can be swiped
+       (phones) or stepped with the arrows (computers)
+    ===================================================== */
+    let cloudPromise = null;
+    function getCloud() {
+        if (!cloudPromise) {
+            cloudPromise = import("./cloud.js")
+                .then((m) => (m.configured ? m : null))
+                .catch((error) => { console.warn("Cloud not available:", error); return null; });
+        }
+        return cloudPromise;
+    }
+
+    let galleryMapPromise = null;
+    function loadGalleryMap() {
+        if (!galleryMapPromise) {
+            galleryMapPromise = getCloud().then(async (cloud) => {
+                const map = new Map();
+                if (!cloud) return map;
+                try {
+                    const list = await cloud.listProducts();
+                    list.forEach((product) => {
+                        const pics = Array.isArray(product.images) ? product.images : [];
+                        if (pics.length > 1) map.set(product.image || pics[0], pics);
+                    });
+                } catch (error) { console.warn("Could not load product pictures:", error); }
+                return map;
+            });
+        }
+        return galleryMapPromise;
+    }
+
+    // Static products: <img src="images/a.jpg" data-images="images/a.jpg,images/b.jpg,images/c.jpg">
+    function listFromAttribute(img) {
+        const raw = img.dataset.images;
+        if (!raw) return [];
+        let list = [];
+        try { list = raw.trim().startsWith("[") ? JSON.parse(raw) : raw.split(","); } catch (error) { list = []; }
+        list = list.map((u) => String(u).trim()).filter(Boolean);
+        const main = img.getAttribute("src");
+        if (main && !list.includes(main)) list.unshift(main);
+        return list;
+    }
+
+    function buildGallery(img, urls) {
+        const frame = img.parentElement;
+        if (!frame) return;
+        frame.querySelectorAll(".zoom-icon").forEach((n) => n.remove());
+        frame.classList.remove("zoomable", "is-zoomed");
+
+        const gallery = document.createElement("div");
+        gallery.className = "swipe-gallery";
+        const track = document.createElement("div");
+        track.className = "swipe-track";
+
+        urls.forEach((url, i) => {
+            const slide = document.createElement("div");
+            slide.className = "swipe-slide";
+            const pic = document.createElement("img");
+            pic.src = url;
+            pic.alt = `${img.alt || "Product"} (${i + 1} of ${urls.length})`;
+            pic.draggable = false;
+            if (i > 0) pic.loading = "lazy";
+            slide.append(pic);
+            track.append(slide);
+        });
+
+        const dots = document.createElement("div");
+        dots.className = "swipe-dots";
+        const dotEls = urls.map((_, i) => {
+            const d = document.createElement("span");
+            if (i === 0) d.className = "active";
+            dots.append(d);
+            return d;
+        });
+        track.addEventListener("scroll", () => {
+            const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+            dotEls.forEach((d, n) => d.classList.toggle("active", n === i));
+        }, { passive: true });
+
+        const arrow = (text, label, cls, dir) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "swipe-arrow " + cls;
+            b.textContent = text;
+            b.setAttribute("aria-label", label);
+            b.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                track.scrollBy({ left: dir * track.clientWidth, behavior: "smooth" });
+            });
+            return b;
+        };
+
+        gallery.append(track, arrow("‹", "Previous picture", "swipe-prev", -1),
+            arrow("›", "Next picture", "swipe-next", 1), dots);
+        img.replaceWith(gallery);
+    }
+
+    function lookupGallery(img) {
+        const src = img.getAttribute("src") || "";
+        if (!src.startsWith("data:")) return;       // only pictures stored in the cloud
+        loadGalleryMap().then((map) => {
+            const urls = map.get(src);
+            if (urls && img.isConnected) buildGallery(img, urls);
+        });
+    }
+
+    // true = the picture became a swipe gallery
+    function setupGallery(img) {
+        const urls = Array.isArray(img.evanaImages) ? img.evanaImages.slice() : listFromAttribute(img);
+        if (urls.length > 1) { buildGallery(img, urls); return true; }
+        if (!img.evanaImages) lookupGallery(img);
+        return false;
+    }
+
+    /* =====================================================
        PHOTO ZOOM: small magnifier icon; the picture zooms on hover
     ===================================================== */
     const MAGNIFIER_SVG =
@@ -892,6 +955,7 @@
     function enhanceZoom(img) {
         if (img.dataset.zoomReady) return;
         img.dataset.zoomReady = "1";
+        if (setupGallery(img)) return;
 
         let frame = img.parentElement;
         if (!frame.classList.contains("product-image")) {
@@ -973,8 +1037,8 @@
         $("checkoutButton")?.addEventListener("click", openCheckoutForm);
         $("checkoutClose")?.addEventListener("click", closeCheckoutForm);
         $("checkoutForm")?.addEventListener("submit", submitCheckout);
-        $("googleSignin")?.addEventListener("click", googleSignin);
-        $("accountSignout")?.addEventListener("click", accountSignout);
+        $("whishOk")?.addEventListener("click", confirmWhish);
+        $("whishBack")?.addEventListener("click", () => { $("whishModal").hidden = true; });
         $("clearCartButton")?.addEventListener("click", () => {
             if (cart.size === 0) return;
             cart.clear();

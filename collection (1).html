@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection | EVANA LUXE</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <style>
+        /* Cream page, luxury background comes from style.css */
+        html { background: #faf5ee; }
+        body { background: transparent; }
+    </style>
+</head>
+<body>
+
+    <div class="announcement">
+        ✨ SPECIAL OFFERS  ✨
+    </div>
+
+    <!-- Header, navigation, search and cart drawer are added by script.js (same as every page) -->
+
+    <main>
+        <div style="padding: 30px 7% 0;">
+            <a href="index.html" class="back-link">← BACK TO HOME</a>
+        </div>
+
+        <div id="collectionRoot"></div>
+
+        <section class="shop-section">
+            
+            <button type="button" id="doneButton" class="diamond-cart-button" aria-label="Go to cart">
+                <span class="diamond-icon">♢</span>
+                <span>VIEW MY BAG</span>
+            </button>
+        </section>
+    </main>
+
+    <footer>
+        <p>Accessories that make you shine ✨</p>
+        <p class="copyright">© 2026 Evana Luxe</p>
+    </footer>
+
+    <!-- Items come from the cloud (collection-manager.html, works on your phone). collection-data.js is only a fallback. -->
+    <script src="collection-data.js"></script>
+    <script type="module">
+    import * as cloud from "./cloud.js";
+
+    const root = document.getElementById("collectionRoot");
+
+    function buildCard(item) {
+        const urls = (Array.isArray(item.images) && item.images.length) ? item.images : (item.image ? [item.image] : []);
+
+        const card = document.createElement("article");
+        card.className = "product-card";
+
+        const imageBox = document.createElement("div");
+        imageBox.className = "product-image";
+        const img = document.createElement("img");
+        img.src = urls[0] || "";
+        img.alt = item.name;
+        if (urls.length > 1) img.evanaImages = urls;   // script.js turns this into a swipe gallery
+        imageBox.appendChild(img);
+
+        const info = document.createElement("div");
+        info.className = "product-info";
+
+        const tag = document.createElement("p");
+        tag.className = "category";
+        tag.textContent = item.tag || "";
+
+        const title = document.createElement("h3");
+        title.textContent = item.name;
+
+        const price = document.createElement("p");
+        price.className = "price";
+        price.textContent = "$ " + Number(item.price).toFixed(2);
+
+        info.append(tag, title, price);
+
+        if (item.options && item.options.length) {
+            const label = document.createElement("label");
+            label.className = "option-label";
+            label.appendChild(document.createTextNode(item.optionLabel || "Choose your option"));
+            const select = document.createElement("select");
+            select.className = "option-select";
+            select.setAttribute("aria-label", item.optionLabel || "Choose your option");
+            item.options.forEach((opt) => {
+                const o = document.createElement("option");
+                o.value = opt;
+                o.textContent = opt;
+                select.appendChild(o);
+            });
+            label.appendChild(select);
+            info.appendChild(label);
+        }
+
+        // Same button the shop uses, so script.js adds it to the SAME cart
+        const button = document.createElement("button");
+        button.className = "add-button";
+        button.type = "button";
+        button.dataset.name = item.name;
+        if (urls[0] && urls[0].indexOf("data:") !== 0) button.dataset.image = urls[0];  // pictures stored as text get a small copy made by script.js
+        button.dataset.price = String(item.price);
+        button.textContent = "Add to Cart";
+        info.appendChild(button);
+
+        card.append(imageBox, info);
+        return card;
+    }
+
+    function render(categories) {
+        root.replaceChildren();
+        let shown = 0;
+        categories.forEach((cat) => {
+            if (!cat.items.length) return;
+            const section = document.createElement("section");
+            section.className = "shop-section";
+            if (shown === 0) section.id = "shop";
+            shown++;
+
+            const heading = document.createElement("div");
+            heading.className = "section-heading";
+            heading.innerHTML = '<p class="eyebrow">COLLECTION</p><h2></h2><p class="sub"></p>';
+            heading.querySelector("h2").textContent = cat.category;
+            heading.querySelector(".sub").textContent = cat.subtitle || "";
+            section.appendChild(heading);
+
+            const grid = document.createElement("div");
+            grid.className = "product-grid";
+            cat.items.forEach((item) => grid.appendChild(buildCard(item)));
+            section.appendChild(grid);
+            root.appendChild(section);
+        });
+        if (!shown) {
+            const empty = document.createElement("p");
+            empty.style.cssText = "text-align:center;padding:40px 7%";
+            empty.textContent = "New pieces are coming soon.";
+            root.appendChild(empty);
+        }
+    }
+
+    function group(list) {
+        const cats = [];
+        list.forEach((item) => {
+            let cat = cats.filter((c) => c.category === item.category)[0];
+            if (!cat) { cat = { category: item.category, subtitle: "", items: [] }; cats.push(cat); }
+            cat.items.push(item);
+        });
+        return cats;
+    }
+
+    (async () => {
+        let items = [];
+        if (cloud.configured) {
+            try { items = await cloud.listCollection(); }
+            catch (e) { console.warn("Could not load the collection:", e); }
+        }
+        if (items.length) { render(group(items)); return; }
+        // fallback: old collection-data.js (if you still have it)
+        const DATA = (typeof COLLECTION !== "undefined" && Array.isArray(COLLECTION)) ? COLLECTION : [];
+        render(DATA.map((c) => ({ category: c.category, subtitle: c.subtitle, items: c.items })));
+    })();
+    </script>
+    <script src="extras.js"></script>
+</body>
+</html>

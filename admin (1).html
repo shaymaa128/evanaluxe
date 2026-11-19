@@ -105,6 +105,13 @@
     color: #8b5a2b;
     overflow-wrap: anywhere;
 }
+.photo-strip{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.photo-strip span{position:relative;display:inline-block}
+.admin-card .photo-strip img{width:84px;height:84px;object-fit:cover;border-radius:6px}
+.photo-strip button{position:absolute;top:2px;right:2px;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:#b3261e;color:#fff;cursor:pointer;line-height:1}
+.one-product{display:flex !important;gap:8px;align-items:center;margin:6px 0 14px}
+.admin-page .one-product input{width:auto;margin:0}
+.hint{color:#7a6552;font-size:13px}
 </style>
 </head>
 
@@ -122,6 +129,7 @@
     <section class="admin-panel" id="gate">
         <h2>Owner sign-in</h2>
         <p id="gateMsg">Loading…</p>
+        <p class="hint">On your phone, open this page in Chrome or Safari (not inside WhatsApp or Instagram) to sign in.</p>
         <button class="admin-button" id="signInBtn" type="button" hidden>Sign in with Google</button>
         <button class="admin-button light" id="signOutBtn" type="button" hidden>Sign out</button>
     </section>
@@ -133,6 +141,7 @@
         <h2>1. Upload photos</h2>
         <label for="photoFiles">Choose multiple pictures</label>
         <input type="file" id="photoFiles" accept="image/*" multiple>
+        <label class="one-product"><input type="checkbox" id="oneProduct"> All selected photos are ONE product (customers swipe between them)</label>
         <button class="admin-button" id="addPhotos" type="button">Add selected photos</button>
         <p id="status" role="status">Choose your product pictures to begin.</p>
     </section>
@@ -236,15 +245,36 @@ function validate(p) {
 }
 const optList = (v) => Array.isArray(v) ? v : String(v || "").split(",").map((o) => o.trim()).filter(Boolean);
 
+function photoStrip(urls, alt, onRemove) {
+    if (urls.length === 1 && !onRemove) {
+        const img = document.createElement("img"); img.src = urls[0]; img.alt = alt;
+        return img;
+    }
+    const strip = document.createElement("div"); strip.className = "photo-strip";
+    urls.forEach((u, i) => {
+        const wrap = document.createElement("span");
+        const im = document.createElement("img"); im.src = u; im.alt = alt;
+        wrap.appendChild(im);
+        if (onRemove) {
+            const x = document.createElement("button");
+            x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "Remove this photo");
+            x.onclick = () => onRemove(i);
+            wrap.appendChild(x);
+        }
+        strip.appendChild(wrap);
+    });
+    return strip;
+}
+
 function renderDrafts() {
     const box = $("draftProducts"); box.replaceChildren();
     drafts.forEach((product) => {
         const card = document.createElement("div"); card.className = "admin-card";
-        const img = document.createElement("img"); img.src = URL.createObjectURL(product.file); img.alt = "Preview";
+        const preview = photoStrip(product.files.map((f) => URL.createObjectURL(f)), "Preview");
         const remove = document.createElement("button");
         remove.type = "button"; remove.className = "admin-button"; remove.textContent = "Remove from upload";
         remove.onclick = () => { drafts = drafts.filter((d) => d.draftId !== product.draftId); renderDrafts(); };
-        card.append(img, ...editorFields(product), remove);
+        card.append(preview, ...editorFields(product), remove);
         box.appendChild(card);
     });
 }
@@ -272,7 +302,8 @@ function renderSaved() {
         const img = document.createElement("img"); img.src = p.image || ""; img.alt = p.name; img.loading = "lazy";
         const h = document.createElement("h3"); h.textContent = p.name;
         const price = document.createElement("p"); price.className = "sale-price"; price.textContent = "$" + Number(p.salePrice).toFixed(2);
-        const cp = document.createElement("p"); cp.textContent = p.category + " → " + (p.subcategory || "Other");
+        const cp = document.createElement("p"); const nPics = (Array.isArray(p.images) && p.images.length) || 1;
+        cp.textContent = p.category + " → " + (p.subcategory || "Other") + (nPics > 1 ? " · " + nPics + " photos (swipe)" : "");
         const d = document.createElement("p"); d.className = "desc";
         d.textContent = (p.description ? p.description + " · " : "") + (p.options && p.options.length ? "Options: " + p.options.join(", ") : "No options");
         const edit = document.createElement("button"); edit.className = "admin-button"; edit.type = "button"; edit.textContent = "Edit product";
@@ -289,16 +320,41 @@ function renderSaved() {
 }
 function openEditor(card, p) {
     const model = { name: p.name, category: p.category, subcategory: p.subcategory, salePrice: p.salePrice, description: p.description || "", options: (p.options || []).join(", ") };
+    model.images = (Array.isArray(p.images) && p.images.length) ? p.images.slice() : (p.image ? [p.image] : []);
+    model.newFiles = [];
     const save = document.createElement("button"); save.className = "admin-button"; save.type = "button"; save.textContent = "Save changes";
     const cancel = document.createElement("button"); cancel.className = "admin-button light"; cancel.type = "button"; cancel.textContent = "Cancel";
-    const img = card.querySelector("img").cloneNode();
-    card.replaceChildren(img, ...editorFields(model), save, cancel);
+
+    const photosBox = document.createElement("div");
+    const redrawPhotos = () => {
+        const urls = [...model.images, ...model.newFiles.map((f) => URL.createObjectURL(f))];
+        photosBox.replaceChildren(photoStrip(urls, p.name, (i) => {
+            if (i < model.images.length) model.images.splice(i, 1);
+            else model.newFiles.splice(i - model.images.length, 1);
+            redrawPhotos();
+        }));
+    };
+    redrawPhotos();
+    const addLabel = document.createElement("label"); addLabel.textContent = "Add more photos (customers swipe between them)";
+    const addInput = document.createElement("input"); addInput.type = "file"; addInput.accept = "image/*"; addInput.multiple = true;
+    addInput.onchange = () => {
+        model.newFiles.push(...[...addInput.files].filter((f) => f.type.startsWith("image/")));
+        addInput.value = ""; redrawPhotos();
+    };
+    addLabel.appendChild(addInput);
+
+    card.replaceChildren(photosBox, addLabel, ...editorFields(model), save, cancel);
     cancel.onclick = renderSaved;
     save.onclick = async () => {
         const err = validate(model); if (err) { statusBox.textContent = err; return; }
+        if (!model.images.length && !model.newFiles.length) { statusBox.textContent = "A product needs at least one photo."; return; }
         save.disabled = true;
+        statusBox.textContent = "Saving…";
         try {
-            const data = { name: model.name.trim(), category: model.category, subcategory: model.subcategory, salePrice: Number(model.salePrice), description: model.description.trim(), options: optList(model.options) };
+            const added = model.newFiles.length ? await cloud.uploadImages(model.newFiles) : [];
+            const images = [...model.images, ...added];
+            if (cloud.imagesSize(images) > cloud.MAX_IMAGES_CHARS) throw new Error("Too many photos for one product. Remove a few.");
+            const data = { name: model.name.trim(), category: model.category, subcategory: model.subcategory, salePrice: Number(model.salePrice), description: model.description.trim(), options: optList(model.options), image: images[0], images };
             await cloud.saveProduct(p.id, data);
             Object.assign(p, data);
             statusBox.textContent = "Changes saved.";
@@ -309,14 +365,13 @@ function openEditor(card, p) {
 async function loadSaved() { saved = await cloud.listProducts(); renderSaved(); }
 
 $("addPhotos").onclick = () => {
-    const files = $("photoFiles").files;
+    const files = [...$("photoFiles").files].filter((f) => f.type.startsWith("image/"));
     if (!files.length) { statusBox.textContent = "Please choose one or more pictures first."; return; }
-    for (const file of files) {
-        if (!file.type.startsWith("image/")) continue;
-        drafts.push({ draftId: nextDraftId++, file, name: file.name.replace(/\.[^.]+$/, ""), category: "Accessories", subcategory: "Rings", salePrice: "", description: "", options: "" });
-    }
+    const blank = (list) => ({ draftId: nextDraftId++, files: list, name: list[0].name.replace(/\.[^.]+$/, ""), category: "Accessories", subcategory: "Rings", salePrice: "", description: "", options: "" });
+    if ($("oneProduct").checked) drafts.push(blank(files));
+    else files.forEach((f) => drafts.push(blank([f])));
     renderDrafts();
-    statusBox.textContent = drafts.length + " picture(s) ready to edit. Enter their prices.";
+    statusBox.textContent = drafts.length + " product(s) ready to edit. Enter their prices.";
 };
 
 $("saveProducts").onclick = async () => {
@@ -324,11 +379,18 @@ $("saveProducts").onclick = async () => {
     for (const p of drafts) { const err = validate(p); if (err) { statusBox.textContent = err; return; } }
     const btn = $("saveProducts"); btn.disabled = true;
     try {
+        const prepared = [];
         let n = 0;
         for (const p of drafts) {
-            statusBox.textContent = "Uploading " + (++n) + " of " + drafts.length + "…";
-            const image = await cloud.uploadImage(p.file);
-            await cloud.saveProduct(null, { name: p.name.trim(), category: p.category, subcategory: p.subcategory, salePrice: Number(p.salePrice), description: p.description.trim(), options: optList(p.options), image, createdAt: Date.now() + n });
+            statusBox.textContent = "Preparing photos " + (++n) + " of " + drafts.length + "…";
+            const images = await cloud.uploadImages(p.files);
+            if (cloud.imagesSize(images) > cloud.MAX_IMAGES_CHARS) throw new Error("\"" + p.name + "\" has too many photos. Use fewer photos for this product.");
+            prepared.push({ p, images });
+        }
+        n = 0;
+        for (const { p, images } of prepared) {
+            statusBox.textContent = "Saving " + (++n) + " of " + prepared.length + "…";
+            await cloud.saveProduct(null, { name: p.name.trim(), category: p.category, subcategory: p.subcategory, salePrice: Number(p.salePrice), description: p.description.trim(), options: optList(p.options), image: images[0], images, createdAt: Date.now() + n });
         }
         drafts = []; renderDrafts(); $("photoFiles").value = "";
         await loadSaved();
@@ -356,6 +418,13 @@ $("importBtn").onclick = async () => {
 };
 
 /* ---------- owner sign-in gate ---------- */
+function signInHelp(e) {
+    const c = (e && e.code) || "";
+    if (c === "auth/unauthorized-domain") return "This website address is not allowed in Firebase yet. In Firebase Console go to Authentication → Settings → Authorized domains and add: " + location.hostname;
+    if (c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request") return "The sign-in window was closed. Tap Sign in again.";
+    if (c === "auth/popup-blocked") return "Your browser blocked the sign-in window. Allow pop-ups for this site and tap Sign in again.";
+    return "Sign-in failed: " + ((e && e.message) || e);
+}
 function showGate(user) {
     const admin = cloud.isAdminUser(user);
     $("adminArea").hidden = !admin;
@@ -371,7 +440,7 @@ function showGate(user) {
         $("gateMsg").textContent = "The cloud is not set up yet. Fill in firebase-config.js, then push to GitHub.";
         return;
     }
-    $("signInBtn").onclick = async () => { try { await cloud.signIn(); } catch (e) { $("gateMsg").textContent = "Sign-in failed: " + e.message; } };
+    $("signInBtn").onclick = async () => { try { await cloud.signIn(); } catch (e) { $("gateMsg").textContent = signInHelp(e); } };
     $("signOutBtn").onclick = () => cloud.signOut();
     await cloud.onUser(showGate);
 })();
