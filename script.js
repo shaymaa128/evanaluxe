@@ -226,121 +226,17 @@
     }
 
     /* ---------- render the cart ---------- */
-    function renderCart() {
-        saveCart();
-
-        const cartItems = $("cartItems");
-        const cartSubtotal = $("cartSubtotal");
-        if (!cartItems || !cartSubtotal) return;
-
-        cartItems.replaceChildren();
-
-        if (cart.size === 0) {
-            const empty = document.createElement("p");
-            empty.className = "empty-cart";
-            empty.textContent = "Your bag is empty.";
-            cartItems.append(empty);
-        } else {
-            cart.forEach((item, key) => {
-                const row = document.createElement("article");
-                row.className = "cart-item";
-
-                const thumb = document.createElement("div");
+     const thumb = document.createElement("div");
                 thumb.className = "cart-item-thumb";
                 if (item.image) {
                     const img = document.createElement("img");
                     img.src = item.image;
                     img.alt = item.name;
+                    img.loading = "lazy";
+                    img.decoding = "async";
                     img.addEventListener("error", () => img.remove());
                     thumb.append(img);
                 }
-
-                const details = document.createElement("div");
-                const name = document.createElement("h3");
-                name.textContent = item.name;
-                const price = document.createElement("p");
-                price.textContent = `${money(item.price)} each`;
-
-                const actions = document.createElement("div");
-                actions.className = "cart-item-actions";
-
-                const minus = document.createElement("button");
-                minus.type = "button";
-                minus.textContent = "−";
-                minus.setAttribute("aria-label", `Remove one ${item.name}`);
-                minus.addEventListener("click", () => changeQuantity(key, -1));
-
-                const quantity = document.createElement("span");
-                quantity.textContent = String(item.quantity);
-                quantity.setAttribute("aria-label", "Quantity");
-
-                const plus = document.createElement("button");
-                plus.type = "button";
-                plus.textContent = "+";
-                plus.setAttribute("aria-label", `Add one ${item.name}`);
-                plus.addEventListener("click", () => changeQuantity(key, 1));
-
-                actions.append(minus, quantity, plus);
-                details.append(name, price, actions);
-
-                const remove = document.createElement("button");
-                remove.type = "button";
-                remove.className = "remove-cart-item";
-                remove.textContent = "Remove";
-                remove.addEventListener("click", () => {
-                    cart.delete(key);
-                    renderCart();
-                });
-
-                row.append(thumb, details, remove);
-                cartItems.append(row);
-            });
-        }
-
-        const { subtotal, delivery, total } = cartTotals();
-        cartSubtotal.textContent = money(subtotal);
-        $("cartDelivery").textContent = money(delivery);
-        $("cartTotal").textContent = money(total);
-
-        const count = [...cart.values()].reduce((sum, item) => sum + item.quantity, 0);
-        const badge = $("headerCartCount");
-        if (badge) badge.textContent = String(count);
-    }
-
-    function changeQuantity(key, amount) {
-        const item = cart.get(key);
-        if (!item) return;
-        item.quantity += amount;
-        if (item.quantity <= 0) cart.delete(key);
-        renderCart();
-    }
-
-    /* ---------- find the product picture for a button ---------- */
-    function getProductImage(button) {
-        if (button.dataset.image) return button.dataset.image;
-
-        const card = button.closest(".product-card, .saved-product-card, article");
-        const img = card?.querySelector("img");
-        if (!img) return "";
-
-        const src = img.currentSrc || img.src;
-
-        if (src.startsWith("blob:") || src.startsWith("data:")) {
-            try {
-                const max = 160;
-                const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
-                const canvas = document.createElement("canvas");
-                canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
-                canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
-                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-                return canvas.toDataURL("image/jpeg", 0.8);
-            } catch (error) {
-                return "";
-            }
-        }
-        return img.getAttribute("src") || "";
-    }
-
     /* ---------- add to cart (with the chosen ring/option) ---------- */
     function addToCart(button) {
         const card = button.closest(".product-card, .saved-product-card, article");
