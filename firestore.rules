@@ -11,6 +11,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    // New collection page items: everyone can see, only the owner can change.
+    match /collection/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
     // Each customer can read/write only their own details.
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
