@@ -226,7 +226,25 @@
     }
 
     /* ---------- render the cart ---------- */
-     const thumb = document.createElement("div");
+    function renderCart() {
+        const box = $("cartItems");
+        const count = [...cart.values()].reduce((n, item) => n + item.quantity, 0);
+        const badge = $("headerCartCount");
+        if (badge) badge.textContent = String(count);
+
+        if (box) {
+            box.replaceChildren();
+            if (cart.size === 0) {
+                const empty = document.createElement("p");
+                empty.className = "empty-cart";
+                empty.textContent = "Your bag is empty.";
+                box.append(empty);
+            }
+            cart.forEach((item, key) => {
+                const row = document.createElement("div");
+                row.className = "cart-item";
+
+                const thumb = document.createElement("div");
                 thumb.className = "cart-item-thumb";
                 if (item.image) {
                     const img = document.createElement("img");
@@ -237,6 +255,75 @@
                     img.addEventListener("error", () => img.remove());
                     thumb.append(img);
                 }
+
+                const info = document.createElement("div");
+                const title = document.createElement("h3");
+                title.textContent = item.name;
+                const line = document.createElement("p");
+                line.textContent = `${money(item.price)} x ${item.quantity} = ${money(item.price * item.quantity)}`;
+                const actions = document.createElement("div");
+                actions.className = "cart-item-actions";
+                const minus = document.createElement("button");
+                minus.type = "button";
+                minus.textContent = "−";
+                minus.setAttribute("aria-label", "Decrease quantity");
+                const qty = document.createElement("span");
+                qty.textContent = String(item.quantity);
+                const plus = document.createElement("button");
+                plus.type = "button";
+                plus.textContent = "+";
+                plus.setAttribute("aria-label", "Increase quantity");
+                minus.addEventListener("click", () => {
+                    item.quantity -= 1;
+                    if (item.quantity <= 0) cart.delete(key);
+                    renderCart();
+                });
+                plus.addEventListener("click", () => { item.quantity += 1; renderCart(); });
+                actions.append(minus, qty, plus);
+                info.append(title, line, actions);
+
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "remove-cart-item";
+                remove.textContent = "Remove";
+                remove.addEventListener("click", () => { cart.delete(key); renderCart(); });
+
+                row.append(thumb, info, remove);
+                box.append(row);
+            });
+        }
+
+        const totals = cartTotals();
+        if ($("cartSubtotal")) $("cartSubtotal").textContent = money(totals.subtotal);
+        if ($("cartDelivery")) $("cartDelivery").textContent = money(totals.delivery);
+        if ($("cartTotal")) $("cartTotal").textContent = money(totals.total);
+        saveCart();
+    }
+
+    /* Picture for the cart: normal file paths are used as they are; pictures stored as
+       text (from the cloud) are shrunk to a small thumbnail so the cart stays light. */
+    function getProductImage(button) {
+        const card = button.closest(".product-card, .saved-product-card, article");
+        const img = card && card.querySelector("img");
+        const src = button.dataset.image || (img && (img.currentSrc || img.getAttribute("src"))) || "";
+        if (!src) return "";
+        if (!src.startsWith("data:")) return src;
+        try {
+            if (img && img.complete && img.naturalWidth) {
+                const scale = Math.min(1, 140 / Math.max(img.naturalWidth, img.naturalHeight));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+                canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+                const ctx = canvas.getContext("2d");
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                return canvas.toDataURL("image/jpeg", 0.6);
+            }
+        } catch (error) { /* ignore: cart works without a picture */ }
+        return "";
+    }
+
     /* ---------- add to cart (with the chosen ring/option) ---------- */
     function addToCart(button) {
         const card = button.closest(".product-card, .saved-product-card, article");

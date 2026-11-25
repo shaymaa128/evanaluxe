@@ -260,10 +260,10 @@
         <p class="copyright">©️ 2026 Evana Luxe</p>
     </footer>
 
+    <script src="pager.js"></script>
     <script>
     document.addEventListener("DOMContentLoaded", async () => {
 
-        const PRODUCTS_PER_PAGE = 16;
 
         const categories = {
             accessories: document.getElementById("accessoriesProducts"),
@@ -280,6 +280,61 @@
             mens: "No men's products added yet.",
             bags: "No bags added yet."
         };
+
+        function buildCard(product) {
+            const card = document.createElement("article");
+            card.className = "saved-product-card";
+
+            const image = document.createElement("img");
+            image.src = typeof product.image === "string"
+                ? product.image
+                : URL.createObjectURL(product.image);
+            image.alt = product.name || "EVANA LUXE";
+            if (Array.isArray(product.images) && product.images.length > 1) image.evanaImages = product.images;
+
+            const name = document.createElement("h3");
+            name.textContent = product.name || "EVANA LUXE";
+
+            const price = document.createElement("p");
+            price.className = "sale-price";
+            price.textContent = "$" + Number(product.salePrice).toFixed(2);
+
+            const descLine = document.createElement("p");
+            descLine.className = "product-description";
+            descLine.textContent = product.description || "";
+            descLine.hidden = !product.description;
+
+            const optionList = Array.isArray(product.options) && product.options.length
+                ? product.options
+                : ["Option 1", "Option 2", "Option 3"];
+
+            const optionLabel = document.createElement("label");
+            optionLabel.className = "option-label";
+            optionLabel.textContent = "Choose your option";
+
+            const select = document.createElement("select");
+            select.className = "option-select";
+            optionList.forEach(option => {
+                const element = document.createElement("option");
+                element.value = option;
+                element.textContent = option;
+                select.appendChild(element);
+            });
+            optionLabel.appendChild(select);
+
+            const addButton = document.createElement("button");
+            addButton.type = "button";
+            addButton.className = "add-button";
+            addButton.textContent = "Add to Cart";
+            addButton.dataset.name = product.name || "EVANA LUXE";
+            addButton.dataset.price = String(product.salePrice ?? product.oldPrice ?? "");
+            addButton.dataset.option = select.value;
+            select.addEventListener("change", () => { addButton.dataset.option = select.value; });
+
+            card.append(image, name, price, descLine, optionLabel, addButton);
+            return card;
+        }
+
 try {
 
        let products = [];
@@ -395,114 +450,11 @@ if (!products.length) {
                     const grid = document.createElement("div");
                     grid.className = "saved-product-grid";
 
-                    const controls = document.createElement("div");
-                    controls.className = "load-more-container";
-
-                    const info = document.createElement("p");
-                    info.className = "load-more-info";
-
-                    const button = document.createElement("button");
-                    button.type = "button";
-                    button.className = "load-more-btn";
-                    button.textContent = "Load More";
-
-                    let shown = 0;
-
-                    function renderMore() {
-
-                        const nextItems = items.slice(
-                            shown,
-                            shown + PRODUCTS_PER_PAGE
-                        );
-
-                        nextItems.forEach(product => {
-
-                            const card = document.createElement("article");
-                            card.className = "saved-product-card";
-
-                            const image = document.createElement("img");
-                            image.src = typeof product.image === "string"
-    ? product.image
-    : URL.createObjectURL(product.image);
-                            image.loading = "lazy";
-
-                            const name = document.createElement("h3");
-                            name.textContent = product.name || "EVANA LUXE";
-
-                            const price = document.createElement("p");
-                            price.className = "sale-price";
-                            price.textContent =
-                                "$" + Number(product.salePrice).toFixed(2);
-
-                            const descLine = document.createElement("p");
-                            descLine.className = "product-description";
-                            descLine.textContent = product.description || "";
-                            descLine.hidden = !product.description;
-
-                            const optionList =
-                                Array.isArray(product.options) &&
-                                product.options.length
-                                    ? product.options
-                                    : ["Option 1", "Option 2", "Option 3"];
-
-                            const optionLabel = document.createElement("label");
-                            optionLabel.className = "option-label";
-                            optionLabel.textContent = "Choose your option";
-
-                            const select = document.createElement("select");
-                            select.className = "option-select";
-
-                            optionList.forEach(option => {
-                                const element = document.createElement("option");
-                                element.value = option;
-                                element.textContent = option;
-                                select.appendChild(element);
-                            });
-
-                            optionLabel.appendChild(select);
-
-                            const addButton = document.createElement("button");
-                            addButton.type = "button";
-                            addButton.className = "add-button";
-                            addButton.textContent = "Add to Cart";
-                            addButton.dataset.name =
-                                product.name || "EVANA LUXE";
-                            addButton.dataset.price =
-                                String(product.salePrice ?? product.oldPrice ?? "");
-                            addButton.dataset.option = select.value;
-
-                            select.addEventListener("change", () => {
-                                addButton.dataset.option = select.value;
-                            });
-
-                            card.append(
-                                image,
-                                name,
-                                price,
-                                descLine,
-                                optionLabel,
-                                addButton
-                            );
-
-                            grid.appendChild(card);
-                        });
-
-                        shown += nextItems.length;
-
-                        info.textContent =
-                            "Showing " + shown + " of " + items.length + " products";
-
-                        button.hidden = shown >= items.length;
-                    }
-
-                    button.addEventListener("click", renderMore);
-
-                    section.append(heading, grid, controls);
-                    controls.append(info, button);
-
+                    section.append(heading, grid);
                     container.appendChild(section);
 
-                    renderMore();
+                    // 15 products per page, with page numbers underneath
+                    EvanaPager.mount(grid, items, buildCard);
                 });
             });
 
