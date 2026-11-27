@@ -15,9 +15,21 @@
     const ORDERS_KEY = "evanaLuxeOrders";
     const WHATSAPP_NUMBER = "96171102868";
     const DELIVERY_FEE = 4;
-    /* Link that opens the Whish app. Put the official Whish link here if you have one,
-       for example "https://..." from Whish. Leave empty if you do not have it. */
-    const WHISH_APP_URL = "";
+    /* Opens the Whish Money app after the customer taps OK (phones only):
+       iPhone  -> the Whish page in the App Store (it shows "Open" when Whish is installed)
+       Android -> opens the Whish app directly, or the Google Play page if it is not installed */
+    const WHISH_APP_STORE = "https://apps.apple.com/lb/app/whish-money/id1284243483";
+    const WHISH_PLAY_STORE = "https://play.google.com/store/apps/details?id=money.whish.android";
+    function whishUrl() {
+        const ua = navigator.userAgent || "";
+        const iOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        if (iOS) return WHISH_APP_STORE;
+        if (/Android/i.test(ua)) {
+            return "intent://#Intent;package=money.whish.android;S.browser_fallback_url=" +
+                encodeURIComponent(WHISH_PLAY_STORE) + ";end";
+        }
+        return "";   // computer: the customer opens Whish on their phone
+    }
     const JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
 
     /* Pages the search looks through when the word is not on the current page.
@@ -707,7 +719,7 @@
             $("whishStatus").textContent = order.saved
                 ? `Order ${order.number} received ✓`
                 : "We could not save your order online. Tap OK and send it to us on WhatsApp.";
-            $("whishOk").textContent = WHISH_APP_URL ? "OK — OPEN WHISH" : "OK";
+            $("whishOk").textContent = whishUrl() ? "OK — OPEN WHISH" : "OK";
             $("whishModal").hidden = false;
             $("whishOk").focus();
         } catch (err) {
@@ -731,7 +743,8 @@
         setCartOpen(false);
 
         // open the Whish app; the customer then sends the total amount manually
-        if (WHISH_APP_URL) window.location.href = WHISH_APP_URL;
+        const link = whishUrl();
+        if (link) window.location.href = link;
     }
 
     /* =====================================================
