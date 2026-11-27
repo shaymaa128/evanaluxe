@@ -2,11 +2,22 @@
 (() => {
     "use strict";
 
+    /* Lazy loading: every picture created by the site loads only when it is near the screen */
+    const nativeCreate = document.createElement.bind(document);
+    document.createElement = (tag, options) => {
+        const el = nativeCreate(tag, options);
+        if (String(tag).toLowerCase() === "img") { el.loading = "lazy"; el.decoding = "async"; }
+        return el;
+    };
+
     const CART_KEY = "evanaLuxeCart";
     const CUSTOMER_KEY = "evanaLuxeCustomer";
     const ORDERS_KEY = "evanaLuxeOrders";
     const WHATSAPP_NUMBER = "96171102868";
     const DELIVERY_FEE = 4;
+    /* Link that opens the Whish app. Put the official Whish link here if you have one,
+       for example "https://..." from Whish. Leave empty if you do not have it. */
+    const WHISH_APP_URL = "";
     const JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
 
     /* Pages the search looks through when the word is not on the current page.
@@ -138,7 +149,7 @@
                 CLEAR BAG ×
             </button>
 
-            <button type="button" id="checkoutButton"
+            <button type="button" id="checkoutButton" hidden
                 class="checkout-button">
                 CHECKOUT &amp; SEND RECEIPT
             </button>
@@ -152,7 +163,7 @@
                        +961 71 102 868
                     </a>.
                 </p>
-                <p>After checkout, a pop-up shows the total to send on Whish, then your order receipt (PDF) is sent to us on WhatsApp.</p>
+                <p>After you place your order, a pop-up shows the total to send on Whish. Your receipt is saved with your order.</p>
             </div>
 
         </div>
@@ -167,19 +178,22 @@
 
             <form id="checkoutForm" novalidate>
 
-                <label for="customerName">Full name</label>
+                <label for="customerName">Full name *</label>
                 <input type="text" id="customerName" name="name" autocomplete="name" required>
 
-                <label for="customerAddress">Delivery address</label>
+                <label for="customerAddress">Detailed address (city, street, building, floor)</label>
                 <input type="text" id="customerAddress" name="address" autocomplete="street-address" required>
 
-                <label for="customerPhone">Phone number</label>
+                <label for="customerPhone">Phone number *</label>
                 <input type="tel" id="customerPhone" name="phone" autocomplete="tel" inputmode="tel" required>
+
+                <label for="customerEmail">Email (optional)</label>
+                <input type="email" id="customerEmail" name="email" autocomplete="email" inputmode="email">
 
                 <p class="checkout-error" id="checkoutError" role="alert"></p>
 
-                <button type="submit" class="checkout-button" id="checkoutSubmit">CONTINUE TO PAYMENT</button>
-                <p class="checkout-note">No account or email needed. Next you will see the amount to send on Whish, then your PDF receipt is sent to us on WhatsApp.</p>
+                <button type="submit" class="checkout-button" id="checkoutSubmit">PLACE ORDER</button>
+                <p class="checkout-note">Name, address and phone are required. Your receipt with the items and total is saved with your order, then you will see how to pay on Whish.</p>
             </form>
         </div>
     </div>
@@ -187,13 +201,14 @@
     <div class="checkout-modal" id="whishModal" hidden>
         <div class="checkout-box whish-box" role="dialog" aria-modal="true" aria-labelledby="whishTitle">
             <p class="eyebrow">EVANA LUXE</p>
-            <h2 id="whishTitle">GO TO WHISH</h2>
-            <p class="checkout-intro">Open the Whish app and send the total amount below to <strong>+961 71 102 868</strong>.</p>
+            <h2 id="whishTitle">PLEASE GO TO WHISH</h2>
+            <p class="whish-big">AND SEND THE TOTAL AMOUNT</p>
             <p class="whish-amount" id="whishAmount">$0.00</p>
-            <p class="checkout-intro">Delivery fees are included in this total.</p>
-            <p class="checkout-intro">Tap OK and WhatsApp will open so your order receipt (PDF) is sent to us.</p>
+            <p class="whish-big">TO THIS NUMBER</p>
+            <p class="whish-number">+961 71 102 868</p>
+            <p class="checkout-intro" id="whishStatus"></p>
             <button type="button" class="checkout-button" id="whishOk">OK</button>
-            <button type="button" class="link-button" id="whishBack">Back</button>
+            <button type="button" class="link-button" id="whishReceipt">Download my receipt (PDF)</button>
         </div>
     </div>
 `);
@@ -226,9 +241,6 @@
     }
 
     /* ---------- render the cart ---------- */
-<<<<<<< HEAD
-     const thumb = document.createElement("div");
-=======
     function renderCart() {
         const box = $("cartItems");
         const count = [...cart.values()].reduce((n, item) => n + item.quantity, 0);
@@ -248,7 +260,6 @@
                 row.className = "cart-item";
 
                 const thumb = document.createElement("div");
->>>>>>> 9fdb51d7e2d95e16a61e7b0bab0195e3d92a25e5
                 thumb.className = "cart-item-thumb";
                 if (item.image) {
                     const img = document.createElement("img");
@@ -259,8 +270,6 @@
                     img.addEventListener("error", () => img.remove());
                     thumb.append(img);
                 }
-<<<<<<< HEAD
-=======
 
                 const info = document.createElement("div");
                 const title = document.createElement("h3");
@@ -303,6 +312,8 @@
         if ($("cartSubtotal")) $("cartSubtotal").textContent = money(totals.subtotal);
         if ($("cartDelivery")) $("cartDelivery").textContent = money(totals.delivery);
         if ($("cartTotal")) $("cartTotal").textContent = money(totals.total);
+        if ($("checkoutButton")) $("checkoutButton").hidden = cart.size === 0;
+        if ($("clearCartButton")) $("clearCartButton").hidden = cart.size === 0;
         saveCart();
     }
 
@@ -330,7 +341,6 @@
         return "";
     }
 
->>>>>>> 9fdb51d7e2d95e16a61e7b0bab0195e3d92a25e5
     /* ---------- add to cart (with the chosen ring/option) ---------- */
     function addToCart(button) {
         const card = button.closest(".product-card, .saved-product-card, article");
@@ -397,6 +407,7 @@
         $("customerName").value = saved.name || "";
         $("customerAddress").value = saved.address || "";
         $("customerPhone").value = saved.phone || "";
+        $("customerEmail").value = saved.email || "";
         $("customerName").focus();
     }
 
@@ -406,7 +417,7 @@
             return;
         }
         $("checkoutModal").hidden = false;
-        loadJsPdf();                       // load the PDF tool now so sending is instant
+        loadJsPdf();                       // load the PDF tool now so the receipt is instant
         showCheckoutStep();
     }
 
@@ -415,16 +426,37 @@
         if (modal) modal.hidden = true;
     }
 
-    function buildOrder(customer) {
+    /* small picture for the receipt (works for file pictures and cloud pictures) */
+    function toThumb(src, size = 160) {
+        return new Promise((resolve) => {
+            if (!src) { resolve(""); return; }
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const scale = Math.min(1, size / Math.max(img.naturalWidth, img.naturalHeight));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+                    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+                    const ctx = canvas.getContext("2d");
+                    ctx.fillStyle = "#fff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/jpeg", 0.7));
+                } catch (error) { resolve(""); }
+            };
+            img.onerror = () => resolve("");
+            img.src = src;
+        });
+    }
+
+    function buildOrder(customer, items) {
         const now = new Date();
         const pad = (n) => String(n).padStart(2, "0");
         const number = `EL-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-` +
             `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-        const items = [...cart.values()].map((item) => ({
-            name: item.name, price: item.price, quantity: item.quantity
-        }));
         return {
             number,
+            createdAt: now.getTime(),
             date: now.toLocaleString("en-GB"),
             customer,
             items,
@@ -432,14 +464,27 @@
         };
     }
 
-    function saveOrder(order) {
+    /* the phone only remembers the customer's details and a short order list (no photos) */
+    function rememberOrder(order) {
         try {
             localStorage.setItem(CUSTOMER_KEY, JSON.stringify(order.customer));
             const orders = JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]");
-            orders.push(order);
+            orders.push({ number: order.number, date: order.date, total: order.total });
             localStorage.setItem(ORDERS_KEY, JSON.stringify(orders.slice(-30)));
         } catch (error) {
             console.warn("Could not save the order:", error);
+        }
+    }
+
+    /* saved on YOUR server (Firebase Firestore, see orders.js) */
+    async function saveOrderToServer(order) {
+        try {
+            const mod = await import("./orders.js");
+            await mod.saveOrder(order);
+            return true;
+        } catch (error) {
+            console.warn("Order could not be saved on the server:", error);
+            return false;
         }
     }
 
@@ -470,8 +515,7 @@
             `TOTAL: ${money(order.total)}`,
             "",
             "PAYMENT METHOD: Whish application",
-            "Whish payment number: +961 71 102 868",
-            "Please confirm the order and delivery details."
+            "Whish payment number: +961 71 102 868"
         );
         return lines.join("\n");
     }
@@ -494,11 +538,10 @@
         y += 5;
         doc.text(`Date: ${order.date}`, W - M, y, { align: "right" });
         y += 5;
-        doc.setDrawColor(180, 150, 80);
+        doc.setDrawColor(185, 141, 99);
         doc.line(M, y, W - M, y);
         y += 8;
 
-        // customer block
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
         doc.text("CUSTOMER DETAILS", M, y);
@@ -518,14 +561,13 @@
         });
         y += 5;
 
-        // table
         const drawTableHeader = () => {
-            doc.setFillColor(235, 225, 195);
+            doc.setFillColor(240, 228, 212);
             doc.rect(M, y - 5, W - M * 2, 8, "F");
             doc.setFont("helvetica", "bold");
             doc.setFontSize(9);
             doc.text("#", M + 2, y);
-            doc.text("ITEM", M + 10, y);
+            doc.text("ITEM", M + 28, y);
             doc.text("QTY", 135, y, { align: "right" });
             doc.text("PRICE", 163, y, { align: "right" });
             doc.text("TOTAL", W - M - 2, y, { align: "right" });
@@ -541,24 +583,26 @@
         drawTableHeader();
 
         order.items.forEach((item, index) => {
-            const nameLines = doc.splitTextToSize(item.name, 95);
-            const rowHeight = nameLines.length * 5 + 3;
+            const nameLines = doc.splitTextToSize(item.name, 80);
+            const rowHeight = Math.max(nameLines.length * 5 + 4, 21);
             if (y + rowHeight > BOTTOM) {
                 doc.addPage();
                 y = 20;
                 drawTableHeader();
             }
-            doc.text(String(index + 1), M + 2, y);
-            doc.text(nameLines, M + 10, y);
-            doc.text(String(item.quantity), 135, y, { align: "right" });
-            doc.text(money(item.price), 163, y, { align: "right" });
-            doc.text(money(item.price * item.quantity), W - M - 2, y, { align: "right" });
+            doc.text(String(index + 1), M + 2, y + 5);
+            if (item.thumb) {
+                try { doc.addImage(item.thumb, "JPEG", M + 8, y - 3, 17, 17); } catch (error) { /* skip picture */ }
+            }
+            doc.text(nameLines, M + 28, y + 5);
+            doc.text(String(item.quantity), 135, y + 5, { align: "right" });
+            doc.text(money(item.price), 163, y + 5, { align: "right" });
+            doc.text(money(item.price * item.quantity), W - M - 2, y + 5, { align: "right" });
             y += rowHeight;
-            doc.setDrawColor(220, 210, 185);
+            doc.setDrawColor(225, 212, 195);
             doc.line(M, y - 3, W - M, y - 3);
         });
 
-        // totals
         if (y + 40 > BOTTOM) { doc.addPage(); y = 20; }
         y += 4;
         const totalRow = (label, value, bold) => {
@@ -572,7 +616,6 @@
         totalRow("Delivery:", money(order.delivery));
         totalRow("TOTAL:", money(order.total), true);
 
-        // payment
         y += 6;
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
@@ -602,79 +645,93 @@
         window.setTimeout(() => URL.revokeObjectURL(url), 5000);
     }
 
-    async function deliverOrder(order) {
+    /* backup only: used when the server could not be reached, so the order is never lost */
+    async function sendOrderByWhatsApp(order) {
         const message = buildMessage(order);
-        let file = null;
-        await loadJsPdf();
-
-        if (window.jspdf && window.jspdf.jsPDF) {
-            try {
-                const pdf = createPdf(order);
-                file = new File([pdf.blob], pdf.filename, { type: "application/pdf" });
-            } catch (error) {
-                console.error("PDF could not be created:", error);
-            }
-        }
-
-        // Phones: open the share sheet with the PDF so the customer picks WhatsApp.
-        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({ files: [file], text: message, title: "EVANA LUXE order" });
-                return "shared";
-            } catch (error) {
-                if (error && error.name === "AbortError") return "cancelled";
-            }
-        }
-
-        // Computers: download the PDF and open WhatsApp with the full order text.
-        if (file) downloadFile(file);
+        if (pendingPdf) downloadFile(new File([pendingPdf.blob], pendingPdf.filename, { type: "application/pdf" }));
         window.open(
             `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
             "_blank", "noopener,noreferrer"
         );
-        return file ? "downloaded" : "text-only";
     }
 
     let pendingOrder = null;
+    let pendingPdf = null;
 
-    function submitCheckout(event) {
+    function downloadPendingReceipt() {
+        if (!pendingPdf) { window.alert("The receipt is not available."); return; }
+        downloadFile(new File([pendingPdf.blob], pendingPdf.filename, { type: "application/pdf" }));
+    }
+
+    async function submitCheckout(event) {
         event.preventDefault();
         const error = $("checkoutError");
         const name = $("customerName").value.trim();
         const address = $("customerAddress").value.trim();
         const phone = $("customerPhone").value.trim();
+        const email = $("customerEmail").value.trim();
 
-        if (name.length < 2) { error.textContent = "Please enter your full name."; return; }
-        if (address.length < 5) { error.textContent = "Please enter your delivery address."; return; }
+        if (name.split(/\s+/).filter(Boolean).length < 2) { error.textContent = "Please enter your full name (first and last name)."; return; }
+        if (address.length < 8) { error.textContent = "Please enter your detailed address."; return; }
         if (phone.replace(/\D/g, "").length < 7) { error.textContent = "Please enter a valid phone number."; return; }
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { error.textContent = "The email is not valid. Fix it or leave it empty."; return; }
         if (cart.size === 0) { error.textContent = "Your bag is empty."; return; }
 
         error.textContent = "";
-        pendingOrder = buildOrder({ name, address, phone });
-        saveOrder(pendingOrder);
-        closeCheckoutForm();
+        const submit = $("checkoutSubmit");
+        submit.disabled = true;
+        submit.textContent = "PREPARING YOUR RECEIPT…";
 
-        // Popup: send the total on Whish, then OK opens WhatsApp with the PDF
-        $("whishAmount").textContent = money(pendingOrder.total);
-        $("whishModal").hidden = false;
-        $("whishOk").focus();
+        try {
+            const items = await Promise.all([...cart.values()].map(async (item) => ({
+                name: item.name, price: item.price, quantity: item.quantity, thumb: await toThumb(item.image)
+            })));
+            const customer = { name, address, phone };
+            if (email) customer.email = email;
+            const order = buildOrder(customer, items);
+
+            await loadJsPdf();
+            pendingPdf = null;
+            if (window.jspdf && window.jspdf.jsPDF) {
+                try { pendingPdf = createPdf(order); } catch (err) { console.error("PDF could not be created:", err); }
+            }
+            order.pdfData = pendingPdf ? pendingPdf.doc.output("datauristring").split(",")[1] : "";
+
+            submit.textContent = "SAVING YOUR ORDER…";
+            order.saved = await saveOrderToServer(order);
+            rememberOrder(order);
+            pendingOrder = order;
+
+            closeCheckoutForm();
+            $("whishAmount").textContent = money(order.total);
+            $("whishStatus").textContent = order.saved
+                ? `Order ${order.number} received ✓`
+                : "We could not save your order online. Tap OK and send it to us on WhatsApp.";
+            $("whishOk").textContent = WHISH_APP_URL ? "OK — OPEN WHISH" : "OK";
+            $("whishModal").hidden = false;
+            $("whishOk").focus();
+        } catch (err) {
+            console.error(err);
+            error.textContent = "Something went wrong. Please try again.";
+        } finally {
+            submit.disabled = false;
+            submit.textContent = "PLACE ORDER";
+        }
     }
 
     async function confirmWhish() {
         if (!pendingOrder) { $("whishModal").hidden = true; return; }
-        const button = $("whishOk");
-        button.disabled = true;
-        const result = await deliverOrder(pendingOrder);
-        button.disabled = false;
-        if (result === "cancelled") return;      // popup stays so the customer can try again
+        const order = pendingOrder;
+        if (!order.saved) await sendOrderByWhatsApp(order);
 
         pendingOrder = null;
+        cart.clear();
+        renderCart();
         $("whishModal").hidden = true;
-        if (result === "downloaded") {
-            window.alert("Your PDF receipt was downloaded and WhatsApp is opening.\nPlease attach the PDF in the chat and tap Send.");
-        } else if (result === "text-only") {
-            window.alert("WhatsApp is opening with your full order. Please tap Send.");
-        }
+        setCartOpen(false);
+
+        // open the Whish app; the customer then sends the total amount manually
+        if (WHISH_APP_URL) window.location.href = WHISH_APP_URL;
     }
 
     /* =====================================================
@@ -1028,7 +1085,7 @@
         $("checkoutClose")?.addEventListener("click", closeCheckoutForm);
         $("checkoutForm")?.addEventListener("submit", submitCheckout);
         $("whishOk")?.addEventListener("click", confirmWhish);
-        $("whishBack")?.addEventListener("click", () => { $("whishModal").hidden = true; });
+        $("whishReceipt")?.addEventListener("click", downloadPendingReceipt);
         $("clearCartButton")?.addEventListener("click", () => {
             if (cart.size === 0) return;
             cart.clear();
@@ -1074,6 +1131,11 @@
             renderCart();
         });
 
+        document.querySelectorAll("img").forEach((img) => {
+            if (img.closest(".site-header")) return;
+            if (!img.hasAttribute("loading")) img.loading = "lazy";
+            if (!img.hasAttribute("decoding")) img.decoding = "async";
+        });
         renderCart();
         initZoom();
         applySearchFromUrl();

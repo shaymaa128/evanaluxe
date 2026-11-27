@@ -2199,3 +2199,31 @@ mark.search-hit.current { background: var(--brown); color: #fff; box-shadow: 0 0
 .pager-gap { color: var(--muted); padding: 0 2px; }
 .pager-info { flex-basis: 100%; margin-top: 4px; text-align: center; color: var(--muted); font-size: 12px; }
 @media (max-width: 480px) { .pager-btn { min-width: 36px; height: 36px; padding: 0 10px; } }
+
+/* =====================================================================
+   EVANA LUXE — phone header, bag steps, Whish popup (keep at the END)
+   ===================================================================== */
+/* phone: search, bag and three lines stay together in the right corner */
+@media (max-width: 760px) {
+    .site-header { justify-content: flex-end; }
+    .header-actions { margin-left: auto; order: 3; }
+    .menu-toggle { order: 3; }
+}
+.checkout-button[hidden], .clear-cart-button[hidden] { display: none !important; }
+
+/* checkout form: required marks */
+.checkout-box input[type="email"] { background: #fff; color: var(--ink); border: 1px solid var(--tan); }
+.checkout-box input[type="email"]:focus { border-color: var(--brown); }
+
+/* Whish popup: large text */
+.whish-box { padding: 34px 22px; }
+.whish-box h2 { font-size: 30px; line-height: 1.2; }
+.whish-big { margin: 10px 0 0; color: var(--choc); font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+.whish-amount { margin: 6px 0 10px; font-size: 56px; }
+.whish-number { margin: 4px 0 14px; color: var(--brown); font: normal 30px Georgia, serif; letter-spacing: 1px; }
+.whish-box .checkout-intro { margin: 0 0 14px; }
+@media (max-width: 480px) {
+    .whish-box h2 { font-size: 25px; }
+    .whish-amount { font-size: 46px; }
+    .whish-number { font-size: 25px; }
+}

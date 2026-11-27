@@ -186,10 +186,35 @@ export async function deleteCollectionMany(ids) {
   }
 }
 
+/* ---- customer orders (saved on your server; only the owner Gmail can read them) ---- */
+export async function saveOrder(order) {
+  await init();
+  const data = JSON.parse(JSON.stringify(order));
+  delete data.saved;
+  // Firestore allows about 1 MB per order: drop the PDF, then the small photos, only if needed
+  if (JSON.stringify(data).length > 900000) data.pdfData = "";
+  if (JSON.stringify(data).length > 900000) (data.items || []).forEach((it) => { it.thumb = ""; });
+  data.createdAt = data.createdAt || Date.now();
+  data.status = "new";
+  const ref = fb.store.doc(fb.db, "orders", String(data.number));
+  await fb.store.setDoc(ref, data);
+  return ref.id;
+}
+export async function listOrders() {
+  await init();
+  const snap = await fb.store.getDocs(fb.store.collection(fb.db, "orders"));
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id }))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+}
+export async function deleteOrder(id) {
+  await init();
+  await fb.store.deleteDoc(fb.store.doc(fb.db, "orders", String(id)));
+}
+
 window.EvanaCloud = {
   configured, ready, currentUser, onUser, signIn, signOut, isAdminUser,
   getProfile, saveProfile, listProducts, saveProduct, deleteProduct,
   saveMany, deleteMany, uploadImage, uploadImages, imagesSize, MAX_IMAGES_CHARS,
-  listCollection, saveCollectionItem, deleteCollectionMany, ADMIN_EMAIL
+  listCollection, saveCollectionItem, deleteCollectionMany, saveOrder, listOrders, deleteOrder, ADMIN_EMAIL
 };
 window.dispatchEvent(new Event("evanacloud-ready"));

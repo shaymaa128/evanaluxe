@@ -103,6 +103,15 @@
   </div>
 </div>
 
+<script>
+/* Admin pages only work from the website address or Live Server, not by double-clicking the file */
+if (location.protocol === "file:") {
+  window.addEventListener("DOMContentLoaded", function () {
+    var m = document.getElementById("gateMsg");
+    if (m) { m.textContent = "This page was opened as a file on your computer, so sign-in and uploads cannot work. Open it from your website address (https://shaymaa128.github.io/evanaluxe/collection-manager.html) or with Live Server in VS Code."; m.style.color = "#b3261e"; }
+  });
+}
+</script>
 <script type="module">
 import * as cloud from "./cloud.js";
 

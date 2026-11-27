@@ -167,19 +167,38 @@
         <button class="admin-button" id="importBtn" type="button">Import from products.json</button>
         <p id="importStatus" style="color:#8b5a2b"></p>
     </section>
+
+    <section class="admin-panel" id="ordersPanel">
+        <h2>5. Customer orders</h2>
+        <p>Every order placed on the website is saved here with the customer's details and receipt.</p>
+        <button class="admin-button light" id="refreshOrders" type="button">Refresh orders</button>
+        <p id="ordersCount" style="color:#7a6552;font-size:13px"></p>
+        <div id="ordersList"></div>
+    </section>
     </div>
 </main>
 
+<script>
+/* Admin pages only work from the website address or Live Server, not by double-clicking the file */
+if (location.protocol === "file:") {
+  window.addEventListener("DOMContentLoaded", function () {
+    var m = document.getElementById("gateMsg");
+    if (m) { m.textContent = "This page was opened as a file on your computer, so sign-in and uploads cannot work. Open it from your website address (https://shaymaa128.github.io/evanaluxe/admin.html) or with Live Server in VS Code."; m.style.color = "#b3261e"; }
+  });
+}
+</script>
 <script type="module">
 import * as cloud from "./cloud.js";
 
-const CATEGORIES = ["Accessories","Brazilian Gold Accessories","Perfumes","Bags","Men's Collection"];
+const CATEGORIES = ["Accessories","Brazilian Gold Accessories","Perfumes","Bags","Men's Collection","Men","Women"];
 const SUBCATEGORIES = {
     "Accessories": ["Rings","Bracelets","Necklaces","Sets","Anklets","Earrings","Other"],
     "Brazilian Gold Accessories": ["Rings","Bracelets","Necklaces","Sets","Anklets","Earrings","Other"],
     "Perfumes": ["Original","Standard","Other"],
     "Bags": ["Wallets","Bags","Portemonnaies","Other"],
-    "Men's Collection": ["Watches","Accessories","Other"]
+    "Men's Collection": ["Watches","Accessories","Other"],
+    "Men": ["Men's Clothes","Men's Shoes"],
+    "Women": ["Women's Clothes","Women's Shoes"]
 };
 const $ = (id) => document.getElementById(id);
 const statusBox = $("status");
@@ -417,6 +436,49 @@ $("importBtn").onclick = async () => {
     } catch (e) { box.textContent = "Import failed: " + e.message; }
 };
 
+
+/* ---------- customer orders ---------- */
+function downloadReceipt(o) {
+    const bin = atob(o.pdfData); const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+    const link = document.createElement("a"); link.href = url; link.download = "EvanaLuxe-" + o.number + ".pdf";
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function renderOrders(list) {
+    const box = $("ordersList"); box.replaceChildren();
+    $("ordersCount").textContent = list.length + " order(s)";
+    list.forEach((o) => {
+        const card = document.createElement("div"); card.className = "admin-card"; card.style.marginBottom = "14px";
+        const h = document.createElement("h3"); h.textContent = o.number + " — $" + Number(o.total).toFixed(2);
+        const who = document.createElement("p");
+        const c = o.customer || {};
+        who.textContent = (o.date || "") + " · " + (c.name || "") + " · " + (c.phone || "") + (c.email ? " · " + c.email : "") + " · " + (c.address || "");
+        who.className = "desc";
+        const items = document.createElement("div"); items.className = "photo-strip";
+        (o.items || []).forEach((it) => {
+            const row = document.createElement("span"); row.style.cssText = "display:flex;gap:8px;align-items:center;width:100%;margin-bottom:6px";
+            if (it.thumb) { const im = document.createElement("img"); im.src = it.thumb; im.alt = it.name; im.style.cssText = "width:52px;height:52px;object-fit:cover;border-radius:6px"; row.append(im); }
+            const t = document.createElement("span"); t.textContent = it.quantity + " × " + it.name + " — $" + Number(it.price).toFixed(2); row.append(t);
+            items.append(row);
+        });
+        card.append(h, who, items);
+        if (o.pdfData) { const b = document.createElement("button"); b.type = "button"; b.className = "admin-button"; b.textContent = "Download receipt (PDF)"; b.onclick = () => downloadReceipt(o); card.append(b); }
+        const d = document.createElement("button"); d.type = "button"; d.className = "admin-button danger"; d.textContent = "Delete order";
+        d.onclick = async () => {
+            if (!confirm("Delete order " + o.number + "?")) return;
+            try { await cloud.deleteOrder(o.id); await loadOrders(); } catch (e) { statusBox.textContent = "Could not delete: " + e.message; }
+        };
+        card.append(d); box.append(card);
+    });
+}
+async function loadOrders() {
+    try { renderOrders(await cloud.listOrders()); }
+    catch (e) { $("ordersCount").textContent = "Could not load orders: " + e.message + " (check the Firestore rules for orders)"; }
+}
+$("refreshOrders").onclick = loadOrders;
+
 /* ---------- owner sign-in gate ---------- */
 function signInHelp(e) {
     const c = (e && e.code) || "";
@@ -433,7 +495,7 @@ function showGate(user) {
     $("whoami").textContent = user ? user.email : "";
     $("gateMsg").textContent = !user ? "Sign in with the owner Gmail account to manage products."
         : admin ? "Signed in as owner." : "This Gmail account is not the owner account. Please sign out and use the owner Gmail.";
-    if (admin) { loadSaved().catch((e) => statusBox.textContent = "Could not load products: " + e.message); }
+    if (admin) { loadSaved().catch((e) => statusBox.textContent = "Could not load products: " + e.message); loadOrders(); }
 }
 (async () => {
     if (!cloud.configured) {

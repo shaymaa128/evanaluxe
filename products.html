@@ -248,6 +248,26 @@
             <div id="mensProducts" class="category-products"></div>
         </section>
 
+        <section class="product-category" id="men-clothes">
+            <h2>Men's Clothes</h2>
+            <div id="menClothesProducts" class="category-products"></div>
+        </section>
+
+        <section class="product-category" id="men-shoes">
+            <h2>Men's Shoes</h2>
+            <div id="menShoesProducts" class="category-products"></div>
+        </section>
+
+        <section class="product-category" id="women-clothes">
+            <h2>Women's Clothes</h2>
+            <div id="womenClothesProducts" class="category-products"></div>
+        </section>
+
+        <section class="product-category" id="women-shoes">
+            <h2>Women's Shoes</h2>
+            <div id="womenShoesProducts" class="category-products"></div>
+        </section>
+
         <section class="product-category" id="bags">
             <h2>Bags</h2>
             <div id="bagsProducts" class="category-products"></div>
@@ -270,7 +290,11 @@
             brazilian: document.getElementById("brazilianProducts"),
             perfumes: document.getElementById("perfumesProducts"),
             mens: document.getElementById("mensProducts"),
-            bags: document.getElementById("bagsProducts")
+            bags: document.getElementById("bagsProducts"),
+            "men-clothes": document.getElementById("menClothesProducts"),
+            "men-shoes": document.getElementById("menShoesProducts"),
+            "women-clothes": document.getElementById("womenClothesProducts"),
+            "women-shoes": document.getElementById("womenShoesProducts")
         };
 
         const emptyMessages = {
@@ -278,7 +302,11 @@
             brazilian: "No Brazilian gold accessories added yet.",
             perfumes: "No perfumes added yet.",
             mens: "No men's products added yet.",
-            bags: "No bags added yet."
+            bags: "No bags added yet.",
+            "men-clothes": "No men's clothes added yet.",
+            "men-shoes": "No men's shoes added yet.",
+            "women-clothes": "No women's clothes added yet.",
+            "women-shoes": "No women's shoes added yet."
         };
 
         function buildCard(product) {
@@ -385,7 +413,11 @@ if (!products.length) {
                 brazilian: new Map(),
                 perfumes: new Map(),
                 mens: new Map(),
-                bags: new Map()
+                bags: new Map(),
+                "men-clothes": new Map(),
+                "men-shoes": new Map(),
+                "women-clothes": new Map(),
+                "women-shoes": new Map()
             };
 
             for (const product of products) {
@@ -394,8 +426,13 @@ if (!products.length) {
                     .trim().toLowerCase();
 
                 let key = "";
+                const subName = String(product.subcategory || "").toLowerCase();
 
-                if (category.includes("brazil")) {
+                if (category === "women" || category.startsWith("women")) {
+                    key = subName.includes("shoe") ? "women-shoes" : "women-clothes";
+                } else if (category === "men") {
+                    key = subName.includes("shoe") ? "men-shoes" : "men-clothes";
+                } else if (category.includes("brazil")) {
                     key = "brazilian";
                 } else if (category.includes("accessor")) {
                     key = "accessories";
@@ -446,6 +483,7 @@ if (!products.length) {
                     const heading = document.createElement("h2");
                     heading.className = "subcategory-heading";
                     heading.textContent = subcategoryName;
+                    if (/^(men|women)-/.test(key)) heading.hidden = true;
 
                     const grid = document.createElement("div");
                     grid.className = "saved-product-grid";
